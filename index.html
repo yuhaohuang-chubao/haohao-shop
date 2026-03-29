@@ -2,15 +2,11 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>豪豪出包 | 時間萃取的酸種滋味</title>
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Noto+Sans+TC:wght@400;700&family=Noto+Serif+TC:wght@700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
-    <!-- Alpine.js -->
     <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    
     <script>
         tailwind.config = {
             theme: {
@@ -32,23 +28,22 @@
         }
     </script>
     <style>
-        body { background-color: #D9C5B2; color: #34312D; -webkit-tap-highlight-color: transparent; }
-        .product-card { transition: transform 0.2s; }
-        .product-card:active { transform: scale(0.98); }
-        .glass-nav { backdrop-filter: blur(10px); background: rgba(243, 243, 244, 0.85); }
         [x-cloak] { display: none !important; }
+        body { background-color: #D9C5B2; color: #34312D; overflow-x: hidden; }
+        .glass-nav { backdrop-filter: blur(10px); background: rgba(243, 243, 244, 0.9); }
+        input, button { font-family: inherit; }
     </style>
 </head>
 <body class="font-sans antialiased" x-data="cookieShop()">
 
-    <!-- 管理員控制按鈕 (隱藏式，長按 LOGO 觸發) -->
+    <!-- 導覽列 -->
     <nav class="sticky top-0 z-50 glass-nav shadow-sm px-4 py-3 flex justify-between items-center">
-        <div class="flex items-center gap-2" @contextmenu.prevent="showAdmin = true">
-            <div class="w-10 h-10 bg-brandAccent rounded-full flex items-center justify-center text-white font-bold font-serif">豪</div>
+        <div class="flex items-center gap-2" @click="adminClickCount++" @dblclick="showAdmin = true">
+            <div class="w-10 h-10 bg-brandAccent rounded-full flex items-center justify-center text-white font-bold font-serif shadow-sm">豪</div>
             <h1 class="font-serif text-xl font-bold tracking-tight text-brandTextBold">豪豪出包</h1>
         </div>
         <div class="flex items-center gap-4">
-            <button @click="showCart = true" class="relative p-2">
+            <button @click="showCart = true" class="relative p-2 text-brandTextMain">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
                 </svg>
@@ -57,55 +52,64 @@
         </div>
     </nav>
 
-    <!-- 主視覺 Banner -->
-    <header class="relative w-full h-[60vh] overflow-hidden bg-gray-300">
+    <!-- 主視覺 -->
+    <header class="relative w-full h-[50vh] min-h-[400px] overflow-hidden">
         <img src="https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&q=80&w=1200" alt="Sourdough" class="w-full h-full object-cover">
-        <div class="absolute inset-0 bg-black/30 flex flex-col justify-center items-center text-white p-6 text-center">
-            <p class="text-sm tracking-[0.3em] uppercase mb-2 font-light">時間萃取的酸種滋味</p>
-            <h2 class="font-serif text-4xl md:text-5xl mb-4">每一片都是驚喜</h2>
-            <div class="w-12 h-[1px] bg-white mb-4"></div>
-            <p class="max-w-xs text-sm leading-relaxed opacity-90">堅持純天然、長時發酵，將大地的饋贈裝進每一包餅乾中。</p>
+        <div class="absolute inset-0 bg-black/40 flex flex-col justify-center items-center text-white p-6 text-center">
+            <p class="text-xs tracking-[0.4em] uppercase mb-3 font-light">時間萃取的酸種滋味</p>
+            <h2 class="font-serif text-4xl mb-4 leading-tight">每一片都是驚喜</h2>
+            <div class="w-12 h-[1px] bg-white/50 mb-5"></div>
+            <p class="max-w-[280px] text-sm leading-relaxed opacity-90">堅持純天然、長時發酵，將大地的饋贈裝進每一包餅乾中。</p>
         </div>
     </header>
 
-    <!-- 訂單狀態提示 -->
+    <!-- 狀態列 -->
     <template x-if="!isOrderOpen">
-        <div class="bg-red-500 text-white text-center py-2 text-sm font-bold sticky top-[64px] z-40">
-            ⚠️ 目前訂單已截止，歡迎瀏覽產品資訊
+        <div class="bg-brandTextBold text-white text-center py-3 text-xs font-bold sticky top-[64px] z-40 flex items-center justify-center gap-2">
+            <span>● 目前訂單已截止</span>
+            <span class="opacity-60">|</span>
+            <span>歡迎瀏覽產品資訊</span>
         </div>
     </template>
 
-    <!-- 產品列表 -->
-    <main class="max-w-2xl mx-auto p-4 md:py-12">
-        <div class="grid grid-cols-1 gap-8">
+    <!-- 產品清單 -->
+    <main class="max-w-xl mx-auto p-5 pb-24">
+        <div class="grid grid-cols-1 gap-10">
             <template x-for="product in products" :key="product.id">
-                <div class="product-card bg-brandSurface rounded-2xl overflow-hidden shadow-sm">
-                    <div class="aspect-square bg-gray-200 relative">
-                        <!-- 模擬圖片載入 -->
-                        <img :src="`https://images.unsplash.com/photo-1558961363-fa8fdf82db35?auto=format&fit=crop&q=80&w=800&sig=${product.id}`" class="w-full h-full object-cover">
+                <div class="bg-brandSurface rounded-[2rem] overflow-hidden shadow-sm border border-black/5">
+                    <div class="aspect-[4/3] bg-gray-200 overflow-hidden">
+                        <img :src="getImage(product.id)" class="w-full h-full object-cover">
                     </div>
-                    <div class="p-6">
-                        <div class="flex justify-between items-start mb-2">
-                            <h3 class="font-serif text-2xl font-bold text-brandTextBold" x-text="product.name"></h3>
-                            <span class="text-brandAccent font-bold" x-text="`$${product.price}`"></span>
+                    <div class="p-7">
+                        <div class="flex justify-between items-end mb-3">
+                            <div>
+                                <h3 class="font-serif text-2xl font-bold text-brandTextBold mb-1" x-text="product.name"></h3>
+                                <p class="text-xs text-brandAccent font-bold" x-text="`$${product.price} / ${product.weight}`"></p>
+                            </div>
                         </div>
-                        <p class="text-sm text-brandTextMain/80 mb-4" x-text="product.description"></p>
-                        <div class="flex items-center justify-between">
-                            <span class="text-xs text-gray-500" x-text="`規格：${product.weight}`"></span>
-                            
-                            <!-- 購物按鈕區 -->
-                            <div x-show="isOrderOpen" class="flex items-center gap-3">
-                                <template x-if="getItemCount(product.id) === 0">
-                                    <button @click="addToCart(product)" class="bg-brandAccent text-white px-4 py-2 rounded-full text-sm font-bold active:bg-brandAccent/80">
-                                        加入購物車
-                                    </button>
-                                </template>
-                                <template x-if="getItemCount(product.id) > 0">
-                                    <div class="flex items-center gap-4 bg-white rounded-full px-3 py-1 border border-brandAccent/20">
-                                        <button @click="updateQty(product.id, -1)" class="text-brandAccent font-bold">-</button>
-                                        <span x-text="getItemCount(product.id)" class="w-4 text-center font-bold"></span>
-                                        <button @click="updateQty(product.id, 1)" class="text-brandAccent font-bold">+</button>
+                        <p class="text-sm text-brandTextMain/70 leading-relaxed mb-6" x-text="product.description"></p>
+                        
+                        <!-- 購物控制 -->
+                        <div class="flex items-center justify-between mt-auto">
+                            <div class="flex-1">
+                                <template x-if="isOrderOpen">
+                                    <div class="flex items-center gap-2">
+                                        <template x-if="getItemCount(product.id) === 0">
+                                            <button @click="addToCart(product)" class="w-full bg-brandAccent text-white py-3 rounded-2xl text-sm font-bold active:scale-95 transition-transform">
+                                                加入購物車
+                                            </button>
+                                        </template>
+                                        <template x-if="getItemCount(product.id) > 0">
+                                            <div class="flex items-center justify-between w-full bg-white rounded-2xl p-1 border border-brandAccent/10">
+                                                <button @click="updateQty(product.id, -1)" class="w-10 h-10 flex items-center justify-center text-brandAccent font-bold">-</button>
+                                                <span x-text="getItemCount(product.id)" class="font-bold text-brandTextBold"></span>
+                                                <button @click="updateQty(product.id, 1)" class="w-10 h-10 flex items-center justify-center text-brandAccent font-bold">+</button>
+                                            </div>
+                                        </template>
                                     </div>
+                                </template>
+                                <template x-if="!isOrderOpen">
+                                    <div class="text-center py-2 px-4 border border-brandTextBold/10 rounded-xl text-xs text-gray-400">目前暫停收單</div>
                                 </template>
                             </div>
                         </div>
@@ -115,74 +119,88 @@
         </div>
     </main>
 
+    <!-- 底部購物車預覽按鈕 (手機版專用) -->
+    <div x-show="cartCount > 0 && !showCart && step === 1" x-cloak 
+         class="fixed bottom-6 left-6 right-6 z-50 animate-bounce">
+        <button @click="showCart = true" class="w-full bg-brandTextBold text-white py-4 rounded-3xl shadow-2xl flex justify-between px-8 items-center">
+            <span class="font-bold">查看購物車</span>
+            <span x-text="`$${total}`" class="bg-white/20 px-3 py-1 rounded-lg text-sm"></span>
+        </button>
+    </div>
+
     <!-- 購物車 Modal -->
-    <div x-show="showCart" x-cloak class="fixed inset-0 z-[100] flex items-end sm:items-center justify-center p-0 sm:p-4">
-        <div @click="showCart = false" class="absolute inset-0 bg-black/60"></div>
-        <div class="relative bg-white w-full max-w-lg rounded-t-3xl sm:rounded-3xl p-6 shadow-2xl overflow-y-auto max-h-[90vh]">
-            <div class="flex justify-between items-center mb-6">
-                <h3 class="text-2xl font-serif font-bold">購物車</h3>
-                <button @click="showCart = false" class="text-gray-400">關閉</button>
+    <div x-show="showCart" x-cloak class="fixed inset-0 z-[100] flex items-end justify-center">
+        <div @click="showCart = false" class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
+        <div class="relative bg-white w-full max-w-lg rounded-t-[3rem] p-8 shadow-2xl overflow-y-auto max-h-[85vh] transition-all">
+            <div class="w-12 h-1 bg-gray-200 rounded-full mx-auto mb-8"></div>
+            <div class="flex justify-between items-center mb-8">
+                <h3 class="text-3xl font-serif font-bold text-brandTextBold">我的清單</h3>
+                <button @click="showCart = false" class="p-2 bg-gray-100 rounded-full text-gray-400">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path></svg>
+                </button>
             </div>
 
-            <div x-show="cart.length === 0" class="text-center py-12 text-gray-400">
-                您的購物車是空的
-            </div>
+            <div x-show="cart.length === 0" class="text-center py-16 text-gray-400 italic">空空如也...</div>
 
             <div x-show="cart.length > 0">
-                <div class="space-y-4 mb-6">
+                <div class="space-y-6 mb-10">
                     <template x-for="item in cart" :key="item.id">
-                        <div class="flex justify-between items-center border-b pb-4 border-gray-100">
-                            <div>
-                                <p class="font-bold text-brandTextBold" x-text="item.name"></p>
-                                <p class="text-xs text-gray-400" x-text="`$${item.price} x ${item.qty}`"></p>
+                        <div class="flex justify-between items-center">
+                            <div class="flex-1">
+                                <p class="font-bold text-brandTextBold text-lg" x-text="item.name"></p>
+                                <p class="text-sm text-brandAccent" x-text="`$${item.price} × ${item.qty}`"></p>
                             </div>
-                            <div class="flex items-center gap-3">
-                                <button @click="updateQty(item.id, -1)" class="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center">-</button>
-                                <span x-text="item.qty" class="font-bold"></span>
-                                <button @click="updateQty(item.id, 1)" class="w-8 h-8 rounded-full border border-gray-200 flex items-center justify-center">+</button>
+                            <div class="flex items-center gap-4 bg-gray-50 rounded-2xl p-1">
+                                <button @click="updateQty(item.id, -1)" class="w-8 h-8 flex items-center justify-center font-bold">-</button>
+                                <span x-text="item.qty" class="w-4 text-center font-bold"></span>
+                                <button @click="updateQty(item.id, 1)" class="w-8 h-8 flex items-center justify-center font-bold">+</button>
                             </div>
                         </div>
                     </template>
                 </div>
 
-                <div class="bg-brandSurface p-4 rounded-xl space-y-2 mb-6 text-sm">
-                    <div class="flex justify-between"><span>小計</span><span x-text="`$${subtotal}`"></span></div>
-                    <div class="flex justify-between"><span>運費 (7-11)</span><span>$60</span></div>
-                    <div class="flex justify-between font-bold text-lg pt-2 border-t text-brandAccent"><span>總計</span><span x-text="`$${total}`"></span></div>
+                <div class="bg-brandSurface p-6 rounded-[2rem] space-y-3 mb-8">
+                    <div class="flex justify-between text-sm text-gray-500"><span>小計</span><span x-text="`$${subtotal}`"></span></div>
+                    <div class="flex justify-between text-sm text-gray-500"><span>運費 (7-11店到店)</span><span>$60</span></div>
+                    <div class="flex justify-between font-bold text-xl pt-4 border-t border-black/5 text-brandAccent"><span>總計</span><span x-text="`$${total}`"></span></div>
                 </div>
 
-                <button @click="step = 2" class="w-full bg-brandAccent text-white py-4 rounded-full font-bold shadow-lg">前往結帳</button>
+                <button @click="step = 2; showCart = false" class="w-full bg-brandAccent text-white py-5 rounded-3xl font-bold shadow-xl shadow-brandAccent/20">填寫收件資訊</button>
             </div>
         </div>
     </div>
 
-    <!-- 結帳 Form Modal -->
-    <div x-show="step === 2" x-cloak class="fixed inset-0 z-[110] flex items-center justify-center p-4">
-        <div @click="step = 1" class="absolute inset-0 bg-black/60"></div>
-        <div class="relative bg-white w-full max-w-lg rounded-3xl p-6 shadow-2xl overflow-y-auto max-h-[90vh]">
-            <h3 class="text-2xl font-serif font-bold mb-6 text-center">填寫寄送資訊</h3>
-            <form @submit.prevent="submitOrder" class="space-y-4 text-sm">
-                <div>
-                    <label class="block text-gray-500 mb-1">中文姓名 *</label>
-                    <input type="text" x-model="formData.customer_name" required class="w-full bg-gray-50 border-none rounded-xl p-3 focus:ring-2 focus:ring-brandAccent">
+    <!-- 結帳 Form (全螢幕) -->
+    <div x-show="step === 2" x-cloak class="fixed inset-0 z-[110] bg-white overflow-y-auto">
+        <div class="max-w-md mx-auto p-8">
+            <button @click="step = 1; showCart = true" class="mb-8 flex items-center gap-2 text-gray-400 font-bold">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path></svg>
+                返回購物車
+            </button>
+            <h3 class="text-3xl font-serif font-bold mb-8">最後一步</h3>
+            
+            <form @submit.prevent="submitOrder" class="space-y-6">
+                <div class="space-y-2">
+                    <label class="text-xs font-bold uppercase tracking-widest text-gray-400">中文姓名 *</label>
+                    <input type="text" x-model="formData.customer_name" required class="w-full bg-gray-50 border-none rounded-2xl p-4 focus:ring-2 focus:ring-brandAccent transition-all">
                 </div>
-                <div>
-                    <label class="block text-gray-500 mb-1">IG 帳號 *</label>
-                    <input type="text" x-model="formData.ig_account" required class="w-full bg-gray-50 border-none rounded-xl p-3 focus:ring-2 focus:ring-brandAccent">
+                <div class="space-y-2">
+                    <label class="text-xs font-bold uppercase tracking-widest text-gray-400">IG 帳號 *</label>
+                    <input type="text" x-model="formData.ig_account" placeholder="@haohao_bake" required class="w-full bg-gray-50 border-none rounded-2xl p-4 focus:ring-2 focus:ring-brandAccent transition-all">
                 </div>
-                <div>
-                    <label class="block text-gray-500 mb-1">手機號碼 *</label>
-                    <input type="tel" x-model="formData.phone" pattern="^09[0-9]{8}$" placeholder="0912345678" required class="w-full bg-gray-50 border-none rounded-xl p-3 focus:ring-2 focus:ring-brandAccent">
+                <div class="space-y-2">
+                    <label class="text-xs font-bold uppercase tracking-widest text-gray-400">手機號碼 *</label>
+                    <input type="tel" x-model="formData.phone" pattern="^09[0-9]{8}$" placeholder="0912345678" required class="w-full bg-gray-50 border-none rounded-2xl p-4 focus:ring-2 focus:ring-brandAccent transition-all">
                 </div>
-                <div>
-                    <label class="block text-gray-500 mb-1">7-11 門市名稱 *</label>
-                    <input type="text" x-model="formData.seven_eleven_store" placeholder="如：豪豪門市" required class="w-full bg-gray-50 border-none rounded-xl p-3 focus:ring-2 focus:ring-brandAccent">
+                <div class="space-y-2">
+                    <label class="text-xs font-bold uppercase tracking-widest text-gray-400">7-11 門市名稱 *</label>
+                    <input type="text" x-model="formData.seven_eleven_store" placeholder="台北門市" required class="w-full bg-gray-50 border-none rounded-2xl p-4 focus:ring-2 focus:ring-brandAccent transition-all">
                 </div>
                 
-                <div class="pt-4">
-                    <button type="submit" :disabled="submitting" class="w-full bg-brandAccent text-white py-4 rounded-full font-bold shadow-lg disabled:opacity-50">
-                        <span x-show="!submitting">確認下單</span>
-                        <span x-show="submitting">訂單傳送中...</span>
+                <div class="pt-6">
+                    <button type="submit" :disabled="submitting" class="w-full bg-brandAccent text-white py-5 rounded-3xl font-bold shadow-xl shadow-brandAccent/20 disabled:opacity-50">
+                        <span x-show="!submitting">確認下單並支付 $<span x-text="total"></span></span>
+                        <span x-show="submitting">傳送中...</span>
                     </button>
                 </div>
             </form>
@@ -190,45 +208,45 @@
     </div>
 
     <!-- 成功畫面 -->
-    <div x-show="step === 3" x-cloak class="fixed inset-0 z-[120] bg-brandBg flex items-center justify-center p-6 text-center">
-        <div class="bg-white p-8 rounded-3xl shadow-xl max-w-sm w-full">
-            <div class="w-20 h-20 bg-green-100 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-                </svg>
+    <div x-show="step === 3" x-cloak class="fixed inset-0 z-[120] bg-brandBg flex items-center justify-center p-8">
+        <div class="bg-white p-10 rounded-[3rem] shadow-2xl max-w-sm w-full text-center">
+            <div class="w-20 h-20 bg-green-50 text-green-500 rounded-full flex items-center justify-center mx-auto mb-8">
+                <svg class="h-10 w-10" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" /></svg>
             </div>
-            <h3 class="text-2xl font-serif font-bold mb-2">下單成功！</h3>
-            <p class="text-gray-500 text-sm mb-6">感謝您的訂購，請依照下方資訊匯款。</p>
-            <div class="bg-gray-50 p-4 rounded-xl text-left text-sm mb-6 font-mono">
+            <h3 class="text-3xl font-serif font-bold mb-4">下單成功</h3>
+            <div class="bg-brandSurface p-6 rounded-2xl text-left text-sm mb-8 font-mono space-y-1">
                 <p>銀行：(000) 某某銀行</p>
                 <p>帳號：XXX-XXXX-XXXX-XXXX</p>
-                <p class="mt-2 font-bold text-brandAccent">總計金額：$<span x-text="total"></span></p>
+                <p class="mt-4 font-bold text-brandAccent text-lg">總計：$<span x-text="total"></span></p>
             </div>
-            <p class="text-xs text-gray-400 leading-relaxed mb-6">匯款完成後請透過 IG 私訊告知，我們將儘速為您安排製作與寄送。</p>
-            <button @click="location.reload()" class="w-full border border-brandAccent text-brandAccent py-3 rounded-full font-bold">返回首頁</button>
+            <p class="text-xs text-gray-400 leading-relaxed mb-8">匯款完成後請透過 IG 私訊告知，我們將儘速為您安排製作與寄送。</p>
+            <button @click="location.reload()" class="w-full py-4 text-brandAccent font-bold">返回首頁</button>
         </div>
     </div>
 
-    <!-- 管理員登入 Modal -->
-    <div x-show="showAdmin" x-cloak class="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/80">
-        <div class="bg-white p-6 rounded-2xl w-full max-w-xs">
-            <h3 class="font-bold mb-4">管理員登入</h3>
-            <input type="password" x-model="adminPassword" placeholder="輸入密碼" class="w-full border p-2 rounded mb-4">
-            <div class="flex gap-2">
-                <button @click="showAdmin = false" class="flex-1 py-2 text-gray-500">取消</button>
-                <button @click="toggleOrderStatus()" class="flex-1 py-2 bg-brandTextBold text-white rounded">切換開關</button>
+    <!-- 管理員控制 -->
+    <div x-show="showAdmin" x-cloak class="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/90 backdrop-blur-md">
+        <div class="bg-white p-8 rounded-[2rem] w-full max-w-xs text-center">
+            <h3 class="font-serif font-bold text-2xl mb-6">後台管理</h3>
+            <input type="password" x-model="adminPassword" placeholder="輸入管理密碼" class="w-full bg-gray-50 border-none rounded-xl p-4 mb-6 text-center">
+            <div class="grid grid-cols-1 gap-3">
+                <button @click="toggleOrderStatus()" class="w-full py-4 bg-brandAccent text-white rounded-2xl font-bold">切換訂單狀態</button>
+                <button @click="showAdmin = false; adminPassword = ''" class="w-full py-4 text-gray-400">取消</button>
             </div>
-            <p class="text-[10px] text-gray-400 mt-4 text-center">目前狀態：<span x-text="isOrderOpen ? '開放中' : '關閉中'"></span></p>
+            <div class="mt-8 text-xs text-gray-400 uppercase tracking-widest">
+                目前狀態：<span :class="isOrderOpen ? 'text-green-500' : 'text-red-500'" x-text="isOrderOpen ? '接受訂單中' : '訂單暫停中'" class="font-bold"></span>
+            </div>
         </div>
     </div>
 
     <script>
-        // 請在此填入你的 Google Apps Script 網址
+        // ！！！請在此填入你的 Google Apps Script 網址 ！！！
         const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxL1ehkro8AOL54SNv4-HtcowjpgJTfknQp_jkFu7IimwGSZBhdg5WSExppD4SEGu8v/exec';
 
         function cookieShop() {
             return {
                 isOrderOpen: true,
+                adminClickCount: 0,
                 products: [
                     { id: 'thyme', name: '百里香酵母餅乾', price: 180, weight: '150g', description: '採集新鮮百里香，帶有清新的草本芬芳。' },
                     { id: 'basil', name: '羅勒酵母餅乾', price: 180, weight: '150g', description: '濃郁羅勒鹹香，宛如品嚐一塊意式窯烤薄餅。' },
@@ -238,30 +256,37 @@
                 ],
                 cart: [],
                 showCart: false,
-                step: 1, // 1: list/cart, 2: form, 3: success
+                step: 1,
                 submitting: false,
                 showAdmin: false,
                 adminPassword: '',
-                formData: {
-                    customer_name: '',
-                    ig_account: '',
-                    phone: '',
-                    seven_eleven_store: ''
-                },
+                formData: { customer_name: '', ig_account: '', phone: '', seven_eleven_store: '' },
 
                 init() {
                     this.fetchRemoteData();
                 },
 
                 async fetchRemoteData() {
+                    if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL === 'YOUR_GOOGLE_APP_SCRIPT_URL') return;
                     try {
                         const res = await fetch(GOOGLE_SCRIPT_URL);
                         const data = await res.json();
                         if (data.products && data.products.length > 0) this.products = data.products;
                         if (data.config && data.config.isOrderOpen !== undefined) {
-                            this.isOrderOpen = data.config.isOrderOpen === true || data.config.isOrderOpen === 'true';
+                            this.isOrderOpen = String(data.config.isOrderOpen) === 'true';
                         }
-                    } catch (e) { console.error("無法載入遠端資料", e); }
+                    } catch (e) { console.error("遠端同步失敗，使用預設配置"); }
+                },
+
+                getImage(id) {
+                    const images = {
+                        'thyme': 'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?auto=format&fit=crop&q=80&w=600',
+                        'basil': 'https://images.unsplash.com/photo-1499636136210-6f4ee915583e?auto=format&fit=crop&q=80&w=600',
+                        'sesame': 'https://images.unsplash.com/photo-1590080874088-eec64895b423?auto=format&fit=crop&q=80&w=600',
+                        'chili': 'https://images.unsplash.com/photo-1534422298391-e4f8c170db0f?auto=format&fit=crop&q=80&w=600',
+                        'cinnamon': 'https://images.unsplash.com/photo-1509365465985-25d11c17e812?auto=format&fit=crop&q=80&w=600'
+                    };
+                    return images[id] || 'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?auto=format&fit=crop&q=80&w=600';
                 },
 
                 getItemCount(id) {
@@ -278,70 +303,45 @@
                     const item = this.cart.find(i => i.id === id);
                     if (item) {
                         item.qty += delta;
-                        if (item.qty <= 0) {
-                            this.cart = this.cart.filter(i => i.id !== id);
-                        }
+                        if (item.qty <= 0) this.cart = this.cart.filter(i => i.id !== id);
                     }
                 },
 
-                get cartCount() {
-                    return this.cart.reduce((sum, i) => sum + i.qty, 0);
-                },
-
-                get subtotal() {
-                    return this.cart.reduce((sum, i) => sum + (i.price * i.qty), 0);
-                },
-
-                get total() {
-                    return this.subtotal > 0 ? this.subtotal + 60 : 0;
-                },
+                get cartCount() { return this.cart.reduce((sum, i) => sum + i.qty, 0); },
+                get subtotal() { return this.cart.reduce((sum, i) => sum + (i.price * i.qty), 0); },
+                get total() { return this.subtotal > 0 ? this.subtotal + 60 : 0; },
 
                 async submitOrder() {
                     this.submitting = true;
                     try {
-                        const payload = {
-                            action: 'submitOrder',
-                            ...this.formData,
-                            cart: this.cart,
-                            total: this.total
-                        };
-                        
-                        await fetch(GOOGLE_SCRIPT_URL, {
-                            method: 'POST',
-                            body: JSON.stringify(payload)
-                        });
-                        
+                        if (GOOGLE_SCRIPT_URL && GOOGLE_SCRIPT_URL !== 'YOUR_GOOGLE_APP_SCRIPT_URL') {
+                            await fetch(GOOGLE_SCRIPT_URL, {
+                                method: 'POST',
+                                body: JSON.stringify({ action: 'submitOrder', ...this.formData, cart: this.cart, total: this.total })
+                            });
+                        }
                         this.step = 3;
                         this.cart = [];
                     } catch (e) {
-                        alert('訂單提交失敗，請檢查網路後再試。');
-                    } finally {
-                        this.submitting = false;
-                    }
+                        alert('提交失敗，請檢查網路！');
+                    } finally { this.submitting = false; }
                 },
 
                 async toggleOrderStatus() {
                     const newValue = !this.isOrderOpen;
                     try {
-                        const res = await fetch(GOOGLE_SCRIPT_URL, {
-                            method: 'POST',
-                            body: JSON.stringify({
-                                action: 'toggleOrder',
-                                password: this.adminPassword,
-                                value: newValue
-                            })
-                        });
-                        const result = await res.json();
-                        if (result.status === 'success') {
-                            this.isOrderOpen = newValue;
-                            this.showAdmin = false;
-                            this.adminPassword = '';
-                        } else {
-                            alert(result.message);
+                        if (GOOGLE_SCRIPT_URL && GOOGLE_SCRIPT_URL !== 'YOUR_GOOGLE_APP_SCRIPT_URL') {
+                            const res = await fetch(GOOGLE_SCRIPT_URL, {
+                                method: 'POST',
+                                body: JSON.stringify({ action: 'toggleOrder', password: this.adminPassword, value: newValue })
+                            });
+                            const result = await res.json();
+                            if (result.status !== 'success') throw new Error(result.message);
                         }
-                    } catch (e) {
-                        alert('更新失敗');
-                    }
+                        this.isOrderOpen = newValue;
+                        this.showAdmin = false;
+                        this.adminPassword = '';
+                    } catch (e) { alert(e.message || '連線失敗'); }
                 }
             }
         }
