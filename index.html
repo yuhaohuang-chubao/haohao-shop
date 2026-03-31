@@ -24,118 +24,178 @@
         * { border-radius: 0 !important; font-family: 'Noto Sans TC', sans-serif; }
         body { background-color: #ffffff; color: #14110F; -webkit-font-smoothing: antialiased; }
         .product-img { aspect-ratio: 3/2; object-fit: cover; width: 100%; background: #F3F3F4; }
-        .fade-in { animation: fadeIn 0.8s ease; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in { animation: fadeIn 0.6s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
         .loader { border: 2px solid #F3F3F4; border-top: 2px solid #14110F; border-radius: 50% !important; width: 24px; height: 24px; animation: spin 1s linear infinite; }
         @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        /* 摺疊動畫 */
+        .content-hidden { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out, opacity 0.2s; opacity: 0; }
+        .content-visible { max-height: 2000px; opacity: 1; transition: max-height 0.5s ease-in, opacity 0.4s; }
+        
+        /* 自定義按鈕 */
+        .btn-qty { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border: 1px solid #E5E7EB; }
     </style>
 </head>
-<body class="pb-20 md:pb-0">
+<body class="pb-24">
 
-    <nav class="sticky top-0 z-50 bg-white/90 backdrop-blur-sm border-b border-gray-100 h-20">
+    <!-- 導覽列 -->
+    <nav class="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100 h-16 md:h-20">
         <div class="max-w-6xl mx-auto px-6 h-full flex items-center justify-between relative">
             <div id="siteName" class="text-xs font-bold tracking-[0.2em] text-primary uppercase">豪豪出包</div>
             <div class="absolute left-1/2 -translate-x-1/2">
-                <img id="siteLogo" src="" alt="Logo" class="h-10 w-auto hidden">
+                <img id="siteLogo" src="" alt="Logo" class="h-8 md:h-10 w-auto hidden">
             </div>
             <button onclick="app.navigate('checkout')" class="relative p-2">
-                <i class="fa-solid fa-cart-shopping text-lg"></i>
-                <span id="cartBadge" class="absolute -top-1 -right-1 bg-accent1 text-white text-[9px] w-4 h-4 flex items-center justify-center hidden">0</span>
+                <i class="fa-solid fa-cart-shopping text-lg text-primary"></i>
+                <span id="cartBadge" class="absolute -top-1 -right-1 bg-accent1 text-white text-[9px] w-4 h-4 flex items-center justify-center hidden font-bold">0</span>
             </button>
         </div>
     </nav>
 
     <main id="app">
+        <!-- 載入中視圖 -->
         <div id="loadingView" class="min-h-[60vh] flex flex-col items-center justify-center text-graytext">
             <div class="loader mb-4"></div>
-            <p class="text-[10px] tracking-[0.3em] uppercase">Loading Artisanal Sourdough</p>
+            <p class="text-[10px] tracking-[0.3em] uppercase">Loading Sourdough</p>
         </div>
 
+        <!-- 首頁視圖 -->
         <div id="homeView" class="hidden fade-in">
-            <img id="heroImg" src="" alt="Hero" class="w-full h-[50vh] md:h-[75vh] object-cover">
+            <img id="heroImg" src="" alt="Hero" class="w-full h-[40vh] md:h-[70vh] object-cover">
             
-            <section class="max-w-3xl mx-auto px-6 py-20">
-                <div id="orderInstructions" class="text-sm md:text-base leading-relaxed text-secondary whitespace-pre-line border-l border-sand pl-8"></div>
+            <!-- 訂購說明 -->
+            <section class="max-w-3xl mx-auto px-6 py-12 md:py-20">
+                <div id="orderInstructions" class="text-sm md:text-base leading-relaxed text-secondary whitespace-pre-line border-l-2 border-sand pl-6 md:pl-8"></div>
             </section>
 
-            <section id="productsContainer" class="max-w-4xl mx-auto px-6 space-y-32 mb-40"></section>
+            <!-- 產品列表 (摺疊式介面) -->
+            <section id="productsContainer" class="max-w-4xl mx-auto px-6 space-y-4 mb-24">
+                <!-- 產品項目將由 JS 動態生成 -->
+            </section>
 
-            <section class="bg-bglight py-24 px-6">
+            <!-- 品牌故事 (移除標題字樣) -->
+            <section class="bg-bglight py-20 px-6">
                 <div class="max-w-2xl mx-auto">
-                    <div class="mb-16">
-                        <span class="text-[10px] font-bold text-graytext tracking-[0.4em] uppercase block mb-6">About Our Studio</span>
-                        <h2 id="brandDescription" class="text-2xl md:text-3xl font-light leading-snug text-primary whitespace-pre-line"></h2>
+                    <div class="mb-12">
+                        <h2 id="brandDescription" class="text-xl md:text-2xl font-light leading-snug text-primary whitespace-pre-line"></h2>
                     </div>
-                    <div class="w-16 h-[1px] bg-sand mb-16"></div>
+                    <div class="w-12 h-[1px] bg-sand mb-12"></div>
                     <div>
-                        <span class="text-[10px] font-bold text-graytext tracking-[0.4em] uppercase block mb-6">Our Philosophy</span>
                         <div id="brandStatement" class="text-sm md:text-base leading-loose text-secondary whitespace-pre-line"></div>
                     </div>
                 </div>
             </section>
         </div>
 
-        <div id="checkoutView" class="hidden fade-in max-w-2xl mx-auto px-6 py-20">
-            <h2 class="text-xl font-bold tracking-[0.2em] mb-12 border-b pb-6">ORDER CONFIRMATION</h2>
-            <div id="cartItems" class="space-y-6 mb-12 border-b pb-12"></div>
-            <div class="flex justify-between items-center text-xl font-bold mb-12">
-                <span>TOTAL</span>
-                <span id="totalPrice" class="text-accent1">NT$ 0</span>
-            </div>
+        <!-- 結帳視圖 (還原版本：更清楚的區塊呈現) -->
+        <div id="checkoutView" class="hidden fade-in max-w-2xl mx-auto px-6 py-12">
+            <h2 class="text-xl font-bold tracking-widest mb-8 text-primary border-b border-gray-100 pb-4">確認訂購內容</h2>
             
-            <form onsubmit="event.preventDefault(); app.submitOrder();" class="space-y-8">
-                <input type="text" id="name" placeholder="中文姓名" required class="w-full border-b py-4 outline-none focus:border-sand">
-                <input type="text" id="ig" placeholder="Instagram 帳號" required class="w-full border-b py-4 outline-none focus:border-sand">
-                <input type="tel" id="phone" placeholder="聯絡手機" required class="w-full border-b py-4 outline-none focus:border-sand">
-                <input type="email" id="email" placeholder="Email" required class="w-full border-b py-4 outline-none focus:border-sand">
-                <input type="text" id="store" placeholder="7-11 門市名稱與店號" required class="w-full border-b py-4 outline-none focus:border-sand">
-                <div class="pt-10 flex gap-4">
-                    <button type="submit" id="submitBtn" class="flex-1 bg-primary text-white py-5 font-bold tracking-widest hover:bg-secondary">SEND ORDER</button>
-                    <button type="button" onclick="app.navigate('home')" class="px-8 text-xs text-graytext uppercase tracking-widest">Back</button>
+            <div id="cartItems" class="space-y-1 mb-8"></div>
+            
+            <div class="bg-bglight p-6 space-y-3 mb-12">
+                <div class="flex justify-between text-sm text-graytext">
+                    <span>商品小計</span>
+                    <span id="subtotalPrice">NT$ 0</span>
+                </div>
+                <div class="flex justify-between text-sm text-graytext">
+                    <span>7-11 運費</span>
+                    <span>NT$ 60</span>
+                </div>
+                <div class="flex justify-between text-lg font-bold text-primary pt-3 border-t border-gray-200">
+                    <span>總計金額</span>
+                    <span id="totalPrice" class="text-accent1 font-bold">NT$ 0</span>
+                </div>
+            </div>
+
+            <h3 class="text-lg font-bold mb-6 text-primary">訂購人資訊</h3>
+            <form onsubmit="event.preventDefault(); app.submitOrder();" class="space-y-6">
+                <div>
+                    <label class="block text-xs font-bold text-graytext mb-2 uppercase tracking-widest">中文姓名 *</label>
+                    <input type="text" id="name" required class="w-full border border-gray-200 px-4 py-3 outline-none focus:border-sand bg-white">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-graytext mb-2 uppercase tracking-widest">Instagram 帳號 *</label>
+                    <input type="text" id="ig" required class="w-full border border-gray-200 px-4 py-3 outline-none focus:border-sand bg-white" placeholder="@your_account">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-graytext mb-2 uppercase tracking-widest">聯絡手機 *</label>
+                    <input type="tel" id="phone" required pattern="09\d{8}" class="w-full border border-gray-200 px-4 py-3 outline-none focus:border-sand bg-white" placeholder="09xxxxxxxx">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-graytext mb-2 uppercase tracking-widest">Email *</label>
+                    <input type="email" id="email" required class="w-full border border-gray-200 px-4 py-3 outline-none focus:border-sand bg-white">
+                </div>
+                <div>
+                    <label class="block text-xs font-bold text-graytext mb-2 uppercase tracking-widest">7-11 門市名稱與店號 *</label>
+                    <input type="text" id="store" required class="w-full border border-gray-200 px-4 py-3 outline-none focus:border-sand bg-white" placeholder="門市名稱 (店號)">
+                </div>
+                <div class="pt-8 flex flex-col md:flex-row gap-4">
+                    <button type="submit" id="submitBtn" class="w-full bg-primary text-white py-5 font-bold tracking-widest hover:bg-secondary">確認並送出訂單</button>
+                    <button type="button" onclick="app.navigate('home')" class="w-full py-5 text-sm text-graytext border border-gray-100 uppercase tracking-widest">返回修改</button>
                 </div>
             </form>
         </div>
 
-        <div id="successView" class="hidden fade-in max-w-xl mx-auto px-6 py-32 text-center">
-            <i class="fa-solid fa-circle-check text-5xl text-accent1 mb-8"></i>
-            <h2 class="text-2xl font-light mb-2">訂單已成功送出</h2>
-            <p id="orderIdDisplay" class="text-xs text-graytext mb-12"></p>
-            <div class="bg-bglight p-10 text-left space-y-6">
-                <div>
-                    <p class="text-[10px] font-bold text-graytext tracking-widest uppercase mb-2">匯款帳號</p>
-                    <div class="flex justify-between items-center border-b border-sand/30 pb-2">
-                        <span id="bankAccount" class="text-lg"></span>
-                        <button onclick="app.copyText('bankAccount')" class="text-sand"><i class="fa-regular fa-copy"></i></button>
+        <!-- 成功視圖 (還原版本：明確的匯款資訊區塊) -->
+        <div id="successView" class="hidden fade-in max-w-xl mx-auto px-6 py-20 text-center">
+            <div class="w-20 h-20 bg-accent3/30 rounded-full flex items-center justify-center mx-auto mb-8">
+                <i class="fa-solid fa-check text-3xl text-accent1"></i>
+            </div>
+            <h2 class="text-2xl font-bold mb-2">訂單已成功送出</h2>
+            <p id="orderIdDisplay" class="text-xs text-graytext mb-12 tracking-widest"></p>
+            
+            <div class="bg-white border border-gray-100 p-8 text-left space-y-6 shadow-sm">
+                <h3 class="font-bold text-primary border-b border-gray-100 pb-4">匯款資訊</h3>
+                <div class="space-y-4">
+                    <div>
+                        <p class="text-[10px] font-bold text-graytext tracking-widest uppercase mb-1">銀行帳號</p>
+                        <div class="flex justify-between items-center bg-bglight px-4 py-3">
+                            <span id="bankAccount" class="text-base font-medium text-primary"></span>
+                            <button onclick="app.copyText('bankAccount')" class="text-sand p-2"><i class="fa-regular fa-copy"></i></button>
+                        </div>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-bold text-graytext tracking-widest uppercase mb-1">應付總額</p>
+                        <p id="successTotal" class="text-2xl font-bold text-accent1"></p>
+                    </div>
+                    <div>
+                        <p class="text-[10px] font-bold text-graytext tracking-widest uppercase mb-1">匯款提醒</p>
+                        <p id="bankReminder" class="text-sm text-secondary leading-loose whitespace-pre-line"></p>
                     </div>
                 </div>
-                <div>
-                    <p class="text-[10px] font-bold text-graytext tracking-widest uppercase mb-2">轉帳提醒</p>
-                    <p id="bankReminder" class="text-xs text-secondary leading-loose whitespace-pre-line"></p>
-                </div>
             </div>
-            <button onclick="window.location.reload()" class="mt-16 text-xs underline text-graytext uppercase tracking-widest">Back to Home</button>
+            <button onclick="window.location.reload()" class="mt-16 text-xs underline text-graytext uppercase tracking-widest">回到首頁</button>
         </div>
     </main>
 
-    <footer class="py-20 px-6 border-t border-gray-50">
+    <!-- Footer (顏色加深優化) -->
+    <footer class="py-16 px-6 border-t border-gray-100">
         <div class="max-w-4xl mx-auto text-center">
-            <p id="footerContent" class="text-xs text-graytext leading-loose whitespace-pre-line mb-8"></p>
-            <p class="text-[9px] text-gray-300 tracking-[0.3em] uppercase">&copy; 2026 HaoHao ChuBao Studio</p>
+            <p id="footerContent" class="text-xs text-secondary leading-loose whitespace-pre-line mb-6 font-medium"></p>
+            <p class="text-[9px] text-graytext tracking-[0.3em] uppercase opacity-70">&copy; 2026 HaoHao ChuBao Studio</p>
         </div>
     </footer>
 
-    <div id="mobileBar" class="fixed bottom-0 left-0 w-full bg-primary text-white p-6 flex justify-between items-center md:hidden z-40 hidden" onclick="app.navigate('checkout')">
-        <span class="text-xs font-bold tracking-widest">CHECKOUT NOW</span>
-        <span id="barTotal" class="font-bold"></span>
+    <!-- 手機結帳導覽列 (還原呈現) -->
+    <div id="mobileBar" class="fixed bottom-0 left-0 w-full bg-primary text-white p-5 flex justify-between items-center md:hidden z-40 hidden" onclick="app.navigate('checkout')">
+        <div class="flex flex-col">
+            <span class="text-[10px] text-white/70 font-bold tracking-widest">點此結帳</span>
+            <span id="barTotal" class="font-bold text-lg"></span>
+        </div>
+        <div class="flex items-center gap-2">
+            <span class="text-xs font-bold tracking-widest">NEXT</span>
+            <i class="fa-solid fa-chevron-right text-xs"></i>
+        </div>
     </div>
 
     <script>
-        /** * ⚠️ 重要：請在此貼上你的 GAS URL 
-         */
+        /** * ⚠️ 重要：請在此貼上你的 GAS URL */
         const GAS_URL = "https://script.google.com/macros/s/AKfycbw8pc2DUZNLCNA4jBVPsCBvFtBmikvb_FWfFPygl_OUbfS4EXPoZhR7hW2PpNb1KlQSyA/exec";
 
         const app = {
-            state: { products: [], settings: {}, cart: {} },
+            state: { products: [], settings: {}, cart: {}, expandedId: null },
             async init() {
                 try {
                     const res = await fetch(GAS_URL + "?action=getData").then(r => r.json());
@@ -144,7 +204,10 @@
                     this.renderSettings();
                     this.renderProducts();
                     this.navigate('home');
-                } catch (e) { console.error("Load failed"); }
+                } catch (e) { 
+                    console.error("Load failed");
+                    // 開發期間若沒填 GAS URL 可在此載入測試資料 (可視需求移除)
+                }
             },
             navigate(page) {
                 document.querySelectorAll('#app > div').forEach(d => d.classList.add('hidden'));
@@ -164,23 +227,57 @@
                 document.getElementById('bankAccount').innerText = s.bank_account;
                 document.getElementById('bankReminder').innerText = s.bank_reminder;
             },
+            toggleProduct(id) {
+                // 如果點擊的是同一個，則關閉；否則開啟新的
+                this.state.expandedId = (this.state.expandedId === id) ? null : id;
+                this.renderProducts();
+            },
             renderProducts() {
                 const container = document.getElementById('productsContainer');
+                container.innerHTML = '';
+                
                 this.state.products.filter(p => String(p.is_visible).toUpperCase() === 'TRUE').forEach(p => {
+                    const isExpanded = this.state.expandedId === p.id;
+                    const qty = this.state.cart[p.id] || 0;
+                    
                     const html = `
-                        <div class="flex flex-col gap-10">
-                            <img src="${p.main_image_url}" class="product-img">
-                            <div>
-                                <h3 class="text-3xl font-bold mb-2">${p.name}</h3>
-                                <p class="text-sm font-medium text-sand tracking-[0.2em] mb-8 uppercase">${p.weight_grams}G <span class="mx-3 text-gray-200">|</span> NT$ ${p.price}</p>
-                                <div class="text-lg md:text-xl text-secondary leading-relaxed mb-12 font-light whitespace-pre-line">${p.description}</div>
-                                <div class="flex items-center gap-8">
-                                    <div class="flex items-center border border-gray-200 h-14">
-                                        <button onclick="app.qty(${p.id},-1)" class="w-14 h-full flex items-center justify-center text-graytext"><i class="fa-solid fa-minus"></i></button>
-                                        <span id="qty-${p.id}" class="w-12 text-center font-bold">0</span>
-                                        <button onclick="app.qty(${p.id},1)" class="w-14 h-full flex items-center justify-center text-graytext"><i class="fa-solid fa-plus"></i></button>
+                        <div class="border border-gray-100 bg-white transition-all duration-300 ${isExpanded ? 'shadow-lg' : ''}">
+                            <!-- Header / Summary (點擊摺疊展開) -->
+                            <div class="flex items-center p-4 cursor-pointer" onclick="app.toggleProduct(${p.id})">
+                                <div class="w-20 h-20 flex-shrink-0 bg-bglight overflow-hidden">
+                                    <img src="${p.main_image_url}" class="w-full h-full object-cover">
+                                </div>
+                                <div class="flex-1 ml-4 pr-4">
+                                    <h3 class="text-lg font-bold text-primary">${p.name}</h3>
+                                    <p class="text-xs font-bold text-sand tracking-widest uppercase">
+                                        ${p.weight_grams}g <span class="mx-1 opacity-30">|</span> NT$ ${p.price}
+                                    </p>
+                                </div>
+                                <div class="text-gray-300 transform transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}">
+                                    <i class="fa-solid fa-chevron-down"></i>
+                                </div>
+                            </div>
+
+                            <!-- 詳細內容 (摺疊區塊) -->
+                            <div class="${isExpanded ? 'content-visible p-4 pt-0 border-t border-gray-50' : 'content-hidden px-4'}">
+                                <div class="py-6">
+                                    <div class="text-base leading-relaxed text-secondary font-light whitespace-pre-line mb-8">
+                                        ${p.description}
                                     </div>
-                                    <span class="text-xs font-bold text-accent1 tracking-widest">每人限購 ${p.max_quantity} 包</span>
+                                    <div class="mb-10">
+                                        <p class="text-[10px] font-bold text-gray-300 uppercase tracking-widest mb-2">Ingredients</p>
+                                        <p class="text-xs text-graytext leading-relaxed">${p.ingredients}</p>
+                                    </div>
+                                    
+                                    <!-- 數量選擇器 (始終可見於摺疊區) -->
+                                    <div class="flex items-center justify-between bg-bglight p-4">
+                                        <div class="flex items-center bg-white border border-gray-200">
+                                            <button onclick="event.stopPropagation(); app.qty(${p.id},-1)" class="btn-qty text-graytext"><i class="fa-solid fa-minus"></i></button>
+                                            <span id="qty-${p.id}" class="w-12 text-center font-bold text-lg">${qty}</span>
+                                            <button onclick="event.stopPropagation(); app.qty(${p.id},1)" class="btn-qty text-graytext"><i class="fa-solid fa-plus"></i></button>
+                                        </div>
+                                        <span class="text-[10px] font-bold text-accent1 tracking-widest">每人限購 ${p.max_quantity} 包</span>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -194,7 +291,7 @@
                 let next = current + delta;
                 if(next >= 0 && next <= p.max_quantity) {
                     this.state.cart[id] = next;
-                    document.getElementById(`qty-${id}`).innerText = next;
+                    this.renderProducts(); // 重新渲染以更新各處數量
                     this.updateUI();
                 }
             },
@@ -204,26 +301,48 @@
                     const q = this.state.cart[p.id] || 0;
                     total += q * p.price; count += q;
                 });
-                document.getElementById('cartBadge').innerText = count;
-                document.getElementById('cartBadge').classList.toggle('hidden', count === 0);
-                document.getElementById('mobileBar').classList.toggle('hidden', count === 0 || document.getElementById('checkoutView').classList.contains('hidden') === false);
-                document.getElementById('barTotal').innerText = 'NT$ ' + (total + 60);
-                document.getElementById('totalPrice').innerText = 'NT$ ' + (total + 60);
                 
-                // 渲染結帳清單
+                // 更新購物車徽章
+                const badge = document.getElementById('cartBadge');
+                badge.innerText = count;
+                badge.classList.toggle('hidden', count === 0);
+                
+                // 更新手機浮動條 (僅首頁顯示)
+                const isHome = !document.getElementById('homeView').classList.contains('hidden');
+                document.getElementById('mobileBar').classList.toggle('hidden', count === 0 || !isHome);
+                document.getElementById('barTotal').innerText = 'NT$ ' + (total + 60);
+                
+                // 更新結帳頁資訊
                 const list = document.getElementById('cartItems');
                 if(list) {
                     list.innerHTML = '';
                     this.state.products.forEach(p => {
                         const q = this.state.cart[p.id] || 0;
-                        if(q > 0) list.insertAdjacentHTML('beforeend', `<div class="flex justify-between"><span>${p.name} x ${q}</span><span>NT$ ${p.price * q}</span></div>`);
+                        if(q > 0) {
+                            list.insertAdjacentHTML('beforeend', `
+                                <div class="flex justify-between items-center py-3 border-b border-gray-50 last:border-0">
+                                    <div class="flex flex-col">
+                                        <span class="font-bold text-primary">${p.name}</span>
+                                        <span class="text-xs text-graytext">NT$ ${p.price} x ${q}</span>
+                                    </div>
+                                    <span class="font-bold text-secondary">NT$ ${p.price * q}</span>
+                                </div>
+                            `);
+                        }
                     });
-                    list.insertAdjacentHTML('beforeend', `<div class="flex justify-between text-graytext text-sm"><span>7-11 運費</span><span>NT$ 60</span></div>`);
                 }
+                const subtotalEl = document.getElementById('subtotalPrice');
+                const totalEl = document.getElementById('totalPrice');
+                if(subtotalEl) subtotalEl.innerText = 'NT$ ' + total;
+                if(totalEl) totalEl.innerText = 'NT$ ' + (total + 60);
+                
+                const successTotalEl = document.getElementById('successTotal');
+                if(successTotalEl) successTotalEl.innerText = 'NT$ ' + (total + 60);
             },
             async submitOrder() {
                 const btn = document.getElementById('submitBtn');
-                btn.disabled = true; btn.innerText = "SENDING...";
+                btn.disabled = true; btn.innerText = "訂單傳送中...";
+                
                 const orderData = {
                     customer_name: document.getElementById('name').value,
                     ig_account: document.getElementById('ig').value,
@@ -231,17 +350,26 @@
                     email: document.getElementById('email').value,
                     cvs_store_name: document.getElementById('store').value,
                     items_json: JSON.stringify(this.state.cart),
-                    subtotal: 0, shipping_fee: 60, total_price: 0 // GAS 會重新計算，這裡傳簡單數值
+                    subtotal: 0, shipping_fee: 60, total_price: 0
                 };
+                
                 try {
                     const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(orderData) }).then(r => r.json());
-                    document.getElementById('orderIdDisplay').innerText = "ORDER ID: " + res.order_id;
-                    this.navigate('success');
-                } catch(e) { alert("提交失敗"); btn.disabled = false; btn.innerText = "RETRY"; }
+                    if(res.status === 'success') {
+                        document.getElementById('orderIdDisplay').innerText = "訂單編號：" + res.order_id;
+                        this.navigate('success');
+                    } else { throw new Error(); }
+                } catch(e) { 
+                    alert("訂單送出失敗，請檢查網路連線或私訊 IG 告知我們。"); 
+                    btn.disabled = false; btn.innerText = "確認並送出訂單"; 
+                }
             },
             copyText(id) {
                 const t = document.getElementById(id).innerText;
-                navigator.clipboard.writeText(t); alert("已複製匯款帳號");
+                const area = document.createElement("textarea");
+                area.value = t; document.body.appendChild(area); area.select();
+                document.execCommand('copy'); document.body.removeChild(area);
+                alert("已複製匯款帳號至剪貼簿");
             }
         };
         app.init();
