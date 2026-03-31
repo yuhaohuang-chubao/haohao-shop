@@ -2,622 +2,249 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <!-- 針對 IG 瀏覽器優化：禁止使用者縮放導致版面跑位 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>豪豪出包 | 酵母餅乾訂購</title>
-    
-    <!-- Tailwind CSS CDN -->
+    <title>豪豪出包 Sourdough</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    
-    <!-- Tailwind Custom Configuration -->
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        primary: '#14110F',
-                        secondary: '#34312D',
-                        graytext: '#7E7F83',
-                        sand: '#D9C5B2',
-                        bglight: '#F3F3F4',
-                        accent1: '#B37BA4',
-                        accent2: '#D99AC5',
-                        accent3: '#DCCDE8',
-                    },
-                    fontFamily: {
-                        sans: ['"Noto Sans TC"', 'sans-serif'],
+                        primary: '#14110F', secondary: '#34312D', graytext: '#7E7F83',
+                        sand: '#D9C5B2', bglight: '#F3F3F4',
+                        accent1: '#B37BA4', accent2: '#D99AC5', accent3: '#DCCDE8',
                     }
                 }
             }
         }
     </script>
-
-    <!-- Google Fonts -->
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
-    
-    <!-- FontAwesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-
     <style>
-        body { font-family: 'Noto Sans TC', sans-serif; background-color: #ffffff; color: #14110F; }
-        /* 隱藏數字輸入框的上下箭頭 */
-        input[type=number]::-webkit-inner-spin-button, 
-        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
-        input[type=number] { -moz-appearance: textfield; }
-        
-        /* 載入動畫 */
-        .loader { border: 3px solid #F3F3F4; border-top: 3px solid #D9C5B2; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
-        
-        /* 漸變顯示動畫 */
-        .fade-in { animation: fadeIn 0.4s ease-in-out; }
+        * { border-radius: 0 !important; font-family: 'Noto Sans TC', sans-serif; }
+        body { background-color: #ffffff; color: #14110F; -webkit-font-smoothing: antialiased; }
+        .product-img { aspect-ratio: 3/2; object-fit: cover; width: 100%; background: #F3F3F4; }
+        .fade-in { animation: fadeIn 0.8s ease; }
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .loader { border: 2px solid #F3F3F4; border-top: 2px solid #14110F; border-radius: 50% !important; width: 24px; height: 24px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     </style>
 </head>
-<body class="antialiased pb-24 selection:bg-sand selection:text-white">
+<body class="pb-20 md:pb-0">
 
-    <!-- 頂部導覽列 / Header -->
-    <header class="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-100">
-        <div class="max-w-3xl mx-auto px-4 h-16 flex items-center justify-between">
-            <div class="font-bold text-xl tracking-wider cursor-pointer" onclick="app.navigate('home')">
-                豪豪出包
+    <nav class="sticky top-0 z-50 bg-white/90 backdrop-blur-sm border-b border-gray-100 h-20">
+        <div class="max-w-6xl mx-auto px-6 h-full flex items-center justify-between relative">
+            <div id="siteName" class="text-xs font-bold tracking-[0.2em] text-primary uppercase">豪豪出包</div>
+            <div class="absolute left-1/2 -translate-x-1/2">
+                <img id="siteLogo" src="" alt="Logo" class="h-10 w-auto hidden">
             </div>
-            <button onclick="app.navigate('checkout')" class="relative p-2 text-primary hover:text-sand transition-colors" id="navCartBtn">
-                <i class="fa-solid fa-cart-shopping text-xl"></i>
-                <span id="cartBadge" class="absolute top-0 right-0 bg-accent1 text-white text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center hidden">0</span>
+            <button onclick="app.navigate('checkout')" class="relative p-2">
+                <i class="fa-solid fa-cart-shopping text-lg"></i>
+                <span id="cartBadge" class="absolute -top-1 -right-1 bg-accent1 text-white text-[9px] w-4 h-4 flex items-center justify-center hidden">0</span>
             </button>
         </div>
-    </header>
+    </nav>
 
-    <!-- 吐司提示 (Toast) 用於取代 alert() -->
-    <div id="toast" class="fixed top-20 left-1/2 transform -translate-x-1/2 bg-secondary text-white px-6 py-3 rounded-full shadow-lg z-50 transition-opacity duration-300 opacity-0 pointer-events-none text-sm whitespace-nowrap">
-        提示訊息
-    </div>
-
-    <!-- 應用程式掛載點 -->
-    <main id="app" class="max-w-3xl mx-auto px-4 py-8 min-h-[80vh] relative">
-        <!-- 初始載入畫面 -->
-        <div id="loadingView" class="flex flex-col items-center justify-center h-64 text-graytext">
+    <main id="app">
+        <div id="loadingView" class="min-h-[60vh] flex flex-col items-center justify-center text-graytext">
             <div class="loader mb-4"></div>
-            <p>正在準備新鮮的酵母餅乾...</p>
+            <p class="text-[10px] tracking-[0.3em] uppercase">Loading Artisanal Sourdough</p>
         </div>
 
-        <!-- 頁面 1: 首頁 (商品列表) -->
         <div id="homeView" class="hidden fade-in">
-            <!-- 視覺與品牌 -->
-            <section class="mb-16 text-center">
-                <h1 class="text-3xl md:text-4xl font-light mb-4 text-primary tracking-widest" id="brandDescTitle">Sourdough Cracker</h1>
-                <p class="text-graytext text-sm tracking-widest mb-8">酸種酵母餅乾</p>
-                <div class="w-full h-64 md:h-96 bg-bglight rounded-2xl mb-8 overflow-hidden flex items-center justify-center">
-                    <!-- Placeholder for Main Visual, you can replace src later -->
-                    <img src="https://images.unsplash.com/photo-1590080875515-8a3a8dc5735e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="主要視覺圖" class="w-full h-full object-cover opacity-90">
-                </div>
-                
-                <div class="bg-bglight/50 rounded-2xl p-6 md:p-10 text-left text-sm md:text-base leading-relaxed text-secondary whitespace-pre-line" id="orderInstructions">
-                    <!-- 訂購說明渲染區 -->
-                </div>
-            </section>
-
-            <!-- 商品列表 -->
-            <section id="productsContainer" class="space-y-16 mb-16">
-                <!-- 商品卡片由 JS 動態生成 -->
-            </section>
-
-            <!-- 品牌聲明 -->
-            <section class="border-t border-gray-200 pt-16 mb-8 text-center px-4">
-                <h3 class="text-xl font-medium mb-6 text-primary">關於酵母餅乾</h3>
-                <div class="text-graytext text-sm leading-relaxed whitespace-pre-line text-left md:text-center max-w-2xl mx-auto" id="brandStatement">
-                    <!-- 品牌聲明渲染區 -->
-                </div>
-            </section>
+            <img id="heroImg" src="" alt="Hero" class="w-full h-[50vh] md:h-[75vh] object-cover">
             
-            <!-- 懸浮購物車按鈕 (Mobile Friendly) -->
-            <div class="fixed bottom-6 left-1/2 transform -translate-x-1/2 w-[90%] max-w-sm z-40">
-                <button onclick="app.navigate('checkout')" class="w-full bg-primary text-white py-4 rounded-full shadow-2xl font-medium tracking-wider flex justify-between items-center px-8 hover:bg-secondary transition-colors" id="floatingCartBtn" style="display: none;">
-                    <span>前往結帳</span>
-                    <span id="floatingCartTotal" class="font-bold">NT$ 0</span>
-                </button>
-            </div>
+            <section class="max-w-3xl mx-auto px-6 py-20">
+                <div id="orderInstructions" class="text-sm md:text-base leading-relaxed text-secondary whitespace-pre-line border-l border-sand pl-8"></div>
+            </section>
+
+            <section id="productsContainer" class="max-w-4xl mx-auto px-6 space-y-32 mb-40"></section>
+
+            <section class="bg-bglight py-24 px-6">
+                <div class="max-w-2xl mx-auto">
+                    <div class="mb-16">
+                        <span class="text-[10px] font-bold text-graytext tracking-[0.4em] uppercase block mb-6">About Our Studio</span>
+                        <h2 id="brandDescription" class="text-2xl md:text-3xl font-light leading-snug text-primary whitespace-pre-line"></h2>
+                    </div>
+                    <div class="w-16 h-[1px] bg-sand mb-16"></div>
+                    <div>
+                        <span class="text-[10px] font-bold text-graytext tracking-[0.4em] uppercase block mb-6">Our Philosophy</span>
+                        <div id="brandStatement" class="text-sm md:text-base leading-loose text-secondary whitespace-pre-line"></div>
+                    </div>
+                </div>
+            </section>
         </div>
 
-        <!-- 頁面 2: 結帳頁面 -->
-        <div id="checkoutView" class="hidden fade-in">
-            <h2 class="text-2xl font-medium mb-8 text-primary border-b pb-4">訂單確認與填寫</h2>
+        <div id="checkoutView" class="hidden fade-in max-w-2xl mx-auto px-6 py-20">
+            <h2 class="text-xl font-bold tracking-[0.2em] mb-12 border-b pb-6">ORDER CONFIRMATION</h2>
+            <div id="cartItems" class="space-y-6 mb-12 border-b pb-12"></div>
+            <div class="flex justify-between items-center text-xl font-bold mb-12">
+                <span>TOTAL</span>
+                <span id="totalPrice" class="text-accent1">NT$ 0</span>
+            </div>
             
-            <!-- 購物車清單 -->
-            <div class="mb-10">
-                <h3 class="text-lg font-medium mb-4">您訂購的餅乾</h3>
-                <div id="cartItemsContainer" class="bg-bglight rounded-2xl p-4 md:p-6 mb-4">
-                    <!-- 購物車項目動態生成 -->
+            <form onsubmit="event.preventDefault(); app.submitOrder();" class="space-y-8">
+                <input type="text" id="name" placeholder="中文姓名" required class="w-full border-b py-4 outline-none focus:border-sand">
+                <input type="text" id="ig" placeholder="Instagram 帳號" required class="w-full border-b py-4 outline-none focus:border-sand">
+                <input type="tel" id="phone" placeholder="聯絡手機" required class="w-full border-b py-4 outline-none focus:border-sand">
+                <input type="email" id="email" placeholder="Email" required class="w-full border-b py-4 outline-none focus:border-sand">
+                <input type="text" id="store" placeholder="7-11 門市名稱與店號" required class="w-full border-b py-4 outline-none focus:border-sand">
+                <div class="pt-10 flex gap-4">
+                    <button type="submit" id="submitBtn" class="flex-1 bg-primary text-white py-5 font-bold tracking-widest hover:bg-secondary">SEND ORDER</button>
+                    <button type="button" onclick="app.navigate('home')" class="px-8 text-xs text-graytext uppercase tracking-widest">Back</button>
                 </div>
-                
-                <!-- 金額計算 -->
-                <div class="flex justify-between items-center text-sm text-graytext mb-2 px-2">
-                    <span>商品小計</span>
-                    <span id="cartSubtotal">NT$ 0</span>
-                </div>
-                <div class="flex justify-between items-center text-sm text-graytext mb-4 px-2">
-                    <span>7-11 常溫交貨便 運費</span>
-                    <span id="cartShipping">NT$ 60</span>
-                </div>
-                <div class="flex justify-between items-center text-lg font-bold text-primary border-t border-gray-200 pt-4 px-2">
-                    <span>總計金額</span>
-                    <span id="cartTotal" class="text-accent1">NT$ 0</span>
-                </div>
-            </div>
-
-            <!-- 訂購者資料表單 -->
-            <div class="bg-white border border-gray-100 shadow-sm rounded-2xl p-6 md:p-8 mb-8">
-                <h3 class="text-lg font-medium mb-6">訂購人資訊</h3>
-                <form id="orderForm" onsubmit="event.preventDefault(); app.submitOrder();">
-                    <div class="space-y-5">
-                        <div>
-                            <label class="block text-sm font-medium text-secondary mb-1">中文姓名 <span class="text-red-500">*</span></label>
-                            <input type="text" id="formName" required class="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-sand focus:ring-1 focus:ring-sand outline-none transition-colors" placeholder="請輸入真實姓名">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-secondary mb-1">Instagram 帳號 <span class="text-red-500">*</span></label>
-                            <input type="text" id="formIG" required class="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-sand focus:ring-1 focus:ring-sand outline-none transition-colors" placeholder="@your_account">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-secondary mb-1">聯絡手機 <span class="text-red-500">*</span></label>
-                            <input type="tel" id="formPhone" required pattern="09\d{8}" class="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-sand focus:ring-1 focus:ring-sand outline-none transition-colors" placeholder="09xxxxxxxx">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-secondary mb-1">Email <span class="text-red-500">*</span></label>
-                            <input type="email" id="formEmail" required class="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-sand focus:ring-1 focus:ring-sand outline-none transition-colors" placeholder="聯絡用電子信箱">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-secondary mb-1">7-11 門市名稱與店號 <span class="text-red-500">*</span></label>
-                            <input type="text" id="formStore" required class="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-sand focus:ring-1 focus:ring-sand outline-none transition-colors" placeholder="例如：板站門市 (店號: 123456)">
-                            <p class="text-xs text-graytext mt-2"><a href="https://emap.pcsc.com.tw/" target="_blank" class="text-sand underline hover:text-secondary">點此查詢 7-11 門市</a></p>
-                        </div>
-                    </div>
-                    
-                    <div class="mt-10 flex gap-4">
-                        <button type="button" onclick="app.navigate('home')" class="w-1/3 py-4 rounded-xl font-medium text-secondary bg-bglight hover:bg-gray-200 transition-colors">
-                            返回
-                        </button>
-                        <button type="submit" id="submitBtn" class="w-2/3 py-4 rounded-xl font-medium text-white bg-primary hover:bg-secondary transition-colors flex justify-center items-center gap-2">
-                            <span>確認送出訂單</span>
-                        </button>
-                    </div>
-                </form>
-            </div>
+            </form>
         </div>
 
-        <!-- 頁面 3: 成功與匯款資訊頁面 -->
-        <div id="successView" class="hidden fade-in text-center py-10">
-            <div class="w-20 h-20 bg-green-50 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
-                <i class="fa-solid fa-check text-4xl"></i>
-            </div>
-            <h2 class="text-2xl font-medium mb-2 text-primary">訂單已送出！</h2>
-            <p class="text-graytext mb-8">您的訂單編號為：<span id="successOrderId" class="font-bold text-secondary"></span></p>
-            
-            <div class="bg-bglight rounded-2xl p-6 md:p-8 text-left max-w-md mx-auto mb-8 shadow-sm">
-                <h3 class="text-lg font-medium mb-4 border-b border-gray-200 pb-2">匯款資訊</h3>
-                <div class="mb-4">
-                    <p class="text-sm text-graytext mb-1">銀行帳號</p>
-                    <div class="flex items-center justify-between">
-                        <p class="text-lg font-medium text-primary select-all" id="bankAccount">--</p>
-                        <button onclick="app.copyText('bankAccount')" class="text-sand hover:text-secondary p-2" title="複製帳號">
-                            <i class="fa-regular fa-copy"></i>
-                        </button>
+        <div id="successView" class="hidden fade-in max-w-xl mx-auto px-6 py-32 text-center">
+            <i class="fa-solid fa-circle-check text-5xl text-accent1 mb-8"></i>
+            <h2 class="text-2xl font-light mb-2">訂單已成功送出</h2>
+            <p id="orderIdDisplay" class="text-xs text-graytext mb-12"></p>
+            <div class="bg-bglight p-10 text-left space-y-6">
+                <div>
+                    <p class="text-[10px] font-bold text-graytext tracking-widest uppercase mb-2">匯款帳號</p>
+                    <div class="flex justify-between items-center border-b border-sand/30 pb-2">
+                        <span id="bankAccount" class="text-lg"></span>
+                        <button onclick="app.copyText('bankAccount')" class="text-sand"><i class="fa-regular fa-copy"></i></button>
                     </div>
                 </div>
-                <div class="mb-4">
-                    <p class="text-sm text-graytext mb-1">匯款總額</p>
-                    <p class="text-2xl font-bold text-accent1" id="successTotal">NT$ 0</p>
-                </div>
-                <div class="text-sm text-secondary bg-white p-4 rounded-lg border border-gray-100 whitespace-pre-line" id="bankReminder">
-                    <!-- 匯款提醒渲染區 -->
+                <div>
+                    <p class="text-[10px] font-bold text-graytext tracking-widest uppercase mb-2">轉帳提醒</p>
+                    <p id="bankReminder" class="text-xs text-secondary leading-loose whitespace-pre-line"></p>
                 </div>
             </div>
-            
-            <button onclick="window.location.reload()" class="text-sand underline hover:text-primary transition-colors">
-                回到首頁
-            </button>
+            <button onclick="window.location.reload()" class="mt-16 text-xs underline text-graytext uppercase tracking-widest">Back to Home</button>
         </div>
     </main>
 
-    <footer class="text-center py-8 text-xs text-graytext border-t border-gray-100 mt-auto">
-        &copy; 2026 豪豪出包. All rights reserved.
+    <footer class="py-20 px-6 border-t border-gray-50">
+        <div class="max-w-4xl mx-auto text-center">
+            <p id="footerContent" class="text-xs text-graytext leading-loose whitespace-pre-line mb-8"></p>
+            <p class="text-[9px] text-gray-300 tracking-[0.3em] uppercase">&copy; 2026 HaoHao ChuBao Studio</p>
+        </div>
     </footer>
 
-    <!-- 應用程式邏輯 (Vanilla JS 單頁應用) -->
+    <div id="mobileBar" class="fixed bottom-0 left-0 w-full bg-primary text-white p-6 flex justify-between items-center md:hidden z-40 hidden" onclick="app.navigate('checkout')">
+        <span class="text-xs font-bold tracking-widest">CHECKOUT NOW</span>
+        <span id="barTotal" class="font-bold"></span>
+    </div>
+
     <script>
-        /** * 設定區：請將此處替換為您部署 Google Apps Script 後獲得的 Web App URL
-         * @type {string}
+        /** * ⚠️ 重要：請在此貼上你的 GAS URL 
          */
-        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbw8pc2DUZNLCNA4jBVPsCBvFtBmikvb_FWfFPygl_OUbfS4EXPoZhR7hW2PpNb1KlQSyA/exec"; 
+        const GAS_URL = "https://script.google.com/macros/s/AKfycbw8pc2DUZNLCNA4jBVPsCBvFtBmikvb_FWfFPygl_OUbfS4EXPoZhR7hW2PpNb1KlQSyA/exec";
 
-        // === 內部狀態管理 ===
         const app = {
-            data: {
-                products: [],
-                settings: {
-                    site_name: "豪豪出包",
-                    brand_description: "Sourdough Cracker \n酸種酵母餅乾",
-                    order_instructions: "載入中...",
-                    brand_statement: "載入中...",
-                    shipping_fee: 60,
-                    bank_account: "",
-                    bank_reminder: ""
-                },
-                cart: {}, // { productId: quantity }
-                currentPage: 'loading' // 'loading', 'home', 'checkout', 'success'
-            },
-
-            // 系統初始化
+            state: { products: [], settings: {}, cart: {} },
             async init() {
                 try {
-                    // 如果沒有設定 API URL，使用模擬測試資料以供開發預覽
-                    if (!GAS_API_URL) {
-                        this.showToast("目前使用測試資料（請記得設定 GAS URL）");
-                        this.loadMockData();
-                    } else {
-                        const response = await fetch(GAS_API_URL + "?action=getData");
-                        const result = await response.json();
-                        if(result.status === 'success') {
-                            this.data.products = result.data.products;
-                            this.data.settings = result.data.settings;
-                        } else {
-                            throw new Error("API 回傳錯誤");
-                        }
-                    }
+                    const res = await fetch(GAS_URL + "?action=getData").then(r => r.json());
+                    this.state.products = res.data.products;
+                    this.state.settings = res.data.settings;
                     this.renderSettings();
                     this.renderProducts();
                     this.navigate('home');
-                } catch (error) {
-                    console.error("初始化失敗:", error);
-                    this.showToast("資料載入失敗，請稍後再試或聯繫客服。");
-                    // 發生錯誤也載入模擬資料以免畫面空白
-                    this.loadMockData();
-                    this.renderSettings();
-                    this.renderProducts();
-                    this.navigate('home');
-                }
+                } catch (e) { console.error("Load failed"); }
             },
-
-            // 路由切換
             navigate(page) {
-                this.data.currentPage = page;
-                window.scrollTo(0, 0);
-                
-                document.getElementById('loadingView').classList.add('hidden');
-                document.getElementById('homeView').classList.add('hidden');
-                document.getElementById('checkoutView').classList.add('hidden');
-                document.getElementById('successView').classList.add('hidden');
-                document.getElementById('floatingCartBtn').style.display = 'none';
-
-                if (page === 'home') {
-                    document.getElementById('homeView').classList.remove('hidden');
-                    this.updateCartUI();
-                } else if (page === 'checkout') {
-                    if (Object.keys(this.data.cart).length === 0) {
-                        this.showToast("購物車是空的喔！");
-                        this.navigate('home');
-                        return;
-                    }
-                    document.getElementById('checkoutView').classList.remove('hidden');
-                    this.renderCheckoutCart();
-                } else if (page === 'success') {
-                    document.getElementById('successView').classList.remove('hidden');
-                }
+                document.querySelectorAll('#app > div').forEach(d => d.classList.add('hidden'));
+                document.getElementById(page + 'View').classList.remove('hidden');
+                window.scrollTo(0,0);
+                this.updateUI();
             },
-
-            // 渲染全域設定文字
             renderSettings() {
-                document.title = `${this.data.settings.site_name} | 酵母餅乾訂購`;
-                document.getElementById('brandDescTitle').innerText = this.data.settings.site_name;
-                document.getElementById('orderInstructions').innerText = this.data.settings.order_instructions;
-                document.getElementById('brandStatement').innerText = this.data.settings.brand_statement;
-                document.getElementById('bankAccount').innerText = this.data.settings.bank_account;
-                document.getElementById('bankReminder').innerText = this.data.settings.bank_reminder;
+                const s = this.state.settings;
+                document.getElementById('siteName').innerText = s.site_name;
+                if(s.logo_url) { const l = document.getElementById('siteLogo'); l.src = s.logo_url; l.classList.remove('hidden'); }
+                document.getElementById('heroImg').src = s.hero_image_url;
+                document.getElementById('orderInstructions').innerText = s.order_instructions;
+                document.getElementById('brandDescription').innerText = s.brand_description;
+                document.getElementById('brandStatement').innerText = s.brand_statement;
+                document.getElementById('footerContent').innerText = s.footer_content;
+                document.getElementById('bankAccount').innerText = s.bank_account;
+                document.getElementById('bankReminder').innerText = s.bank_reminder;
             },
-
-            // 渲染商品列表
             renderProducts() {
                 const container = document.getElementById('productsContainer');
-                container.innerHTML = '';
-                
-                const visibleProducts = this.data.products
-                    .filter(p => String(p.is_visible).toUpperCase() === 'TRUE')
-                    .sort((a, b) => parseInt(a.sort_order) - parseInt(b.sort_order));
-
-                visibleProducts.forEach(product => {
-                    // Initialize cart state
-                    if(this.data.cart[product.id] === undefined) this.data.cart[product.id] = 0;
-                    
-                    const priceNum = parseInt(product.price.replace(/\D/g, '')) || 0; // fallback parse
-                    const imageSrc = product.main_image_url || 'https://images.unsplash.com/photo-1600857544200-b2f666a9a2ec?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80';
-
+                this.state.products.filter(p => String(p.is_visible).toUpperCase() === 'TRUE').forEach(p => {
                     const html = `
-                        <div class="flex flex-col md:flex-row gap-8 items-start">
-                            <!-- 圖片區塊 -->
-                            <div class="w-full md:w-1/2 aspect-square rounded-2xl overflow-hidden bg-bglight relative">
-                                <img src="${imageSrc}" alt="${product.name}" class="w-full h-full object-cover" onerror="this.src='https://images.unsplash.com/photo-1600857544200-b2f666a9a2ec?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80'">
-                                <div class="absolute bottom-4 right-4 bg-white/90 backdrop-blur text-primary text-xs font-bold px-3 py-1 rounded-full shadow-sm">
-                                    ${product.weight_grams}g
+                        <div class="flex flex-col gap-10">
+                            <img src="${p.main_image_url}" class="product-img">
+                            <div>
+                                <h3 class="text-3xl font-bold mb-2">${p.name}</h3>
+                                <p class="text-sm font-medium text-sand tracking-[0.2em] mb-8 uppercase">${p.weight_grams}G <span class="mx-3 text-gray-200">|</span> NT$ ${p.price}</p>
+                                <div class="text-lg md:text-xl text-secondary leading-relaxed mb-12 font-light whitespace-pre-line">${p.description}</div>
+                                <div class="flex items-center gap-8">
+                                    <div class="flex items-center border border-gray-200 h-14">
+                                        <button onclick="app.qty(${p.id},-1)" class="w-14 h-full flex items-center justify-center text-graytext"><i class="fa-solid fa-minus"></i></button>
+                                        <span id="qty-${p.id}" class="w-12 text-center font-bold">0</span>
+                                        <button onclick="app.qty(${p.id},1)" class="w-14 h-full flex items-center justify-center text-graytext"><i class="fa-solid fa-plus"></i></button>
+                                    </div>
+                                    <span class="text-xs font-bold text-accent1 tracking-widest">每人限購 ${p.max_quantity} 包</span>
                                 </div>
-                            </div>
-                            
-                            <!-- 資訊與購買區塊 -->
-                            <div class="w-full md:w-1/2 flex flex-col justify-center">
-                                <h2 class="text-2xl font-bold mb-2 text-primary">${product.name}</h2>
-                                <p class="text-lg font-medium text-accent1 mb-6">${product.price}</p>
-                                
-                                <div class="text-secondary text-sm leading-relaxed mb-6 whitespace-pre-line">
-                                    ${product.description}
-                                </div>
-                                
-                                <div class="bg-bglight/50 p-4 rounded-xl mb-8">
-                                    <h4 class="text-xs font-bold text-graytext mb-2">成分說明</h4>
-                                    <p class="text-xs text-secondary whitespace-pre-line">${product.ingredients}</p>
-                                </div>
-                                
-                                <!-- 數量選擇器 -->
-                                <div class="flex items-center gap-4 border border-gray-200 rounded-xl p-2 w-max mb-2">
-                                    <button onclick="app.updateQuantity(${product.id}, -1, ${product.max_quantity})" class="w-10 h-10 flex items-center justify-center text-graytext hover:text-primary transition-colors disabled:opacity-30" id="btn-minus-${product.id}">
-                                        <i class="fa-solid fa-minus"></i>
-                                    </button>
-                                    <span class="w-10 text-center font-bold text-lg" id="qty-${product.id}">0</span>
-                                    <button onclick="app.updateQuantity(${product.id}, 1, ${product.max_quantity})" class="w-10 h-10 flex items-center justify-center text-graytext hover:text-primary transition-colors disabled:opacity-30" id="btn-plus-${product.id}">
-                                        <i class="fa-solid fa-plus"></i>
-                                    </button>
-                                </div>
-                                <p class="text-xs text-graytext mt-1">每人限購 ${product.max_quantity} 包</p>
                             </div>
                         </div>
                     `;
                     container.insertAdjacentHTML('beforeend', html);
                 });
-                this.updateCartUI();
             },
-
-            // 更新商品數量
-            updateQuantity(productId, change, maxQty) {
-                let current = this.data.cart[productId] || 0;
-                let next = current + change;
-                
-                if (next < 0) next = 0;
-                if (next > maxQty) {
-                    this.showToast(`此款餅乾每人限購 ${maxQty} 包喔！`);
-                    next = maxQty;
+            qty(id, delta) {
+                const p = this.state.products.find(x => x.id == id);
+                let current = this.state.cart[id] || 0;
+                let next = current + delta;
+                if(next >= 0 && next <= p.max_quantity) {
+                    this.state.cart[id] = next;
+                    document.getElementById(`qty-${id}`).innerText = next;
+                    this.updateUI();
                 }
-                
-                this.data.cart[productId] = next;
-                document.getElementById(`qty-${productId}`).innerText = next;
-                
-                this.updateCartUI();
             },
-
-            // 更新全域購物車狀態與 UI (包含小圖示與懸浮按鈕)
-            updateCartUI() {
-                let totalItems = 0;
-                let totalPrice = 0;
-
-                this.data.products.forEach(p => {
-                    const qty = this.data.cart[p.id] || 0;
-                    totalItems += qty;
-                    if(qty > 0) {
-                        const price = parseInt(p.price.replace(/\D/g, '')) || 0;
-                        totalPrice += price * qty;
-                    }
-                    
-                    // Update buttons state
-                    const btnMinus = document.getElementById(`btn-minus-${p.id}`);
-                    const btnPlus = document.getElementById(`btn-plus-${p.id}`);
-                    if(btnMinus) btnMinus.disabled = qty <= 0;
-                    if(btnPlus) btnPlus.disabled = qty >= p.max_quantity;
+            updateUI() {
+                let total = 0, count = 0;
+                this.state.products.forEach(p => {
+                    const q = this.state.cart[p.id] || 0;
+                    total += q * p.price; count += q;
                 });
-
-                // Header Badge
-                const badge = document.getElementById('cartBadge');
-                if (totalItems > 0) {
-                    badge.innerText = totalItems;
-                    badge.classList.remove('hidden');
-                } else {
-                    badge.classList.add('hidden');
-                }
-
-                // Floating Button
-                const floatingBtn = document.getElementById('floatingCartBtn');
-                if (this.data.currentPage === 'home' && totalItems > 0) {
-                    document.getElementById('floatingCartTotal').innerText = `NT$ ${totalPrice}`;
-                    floatingBtn.style.display = 'flex';
-                } else {
-                    floatingBtn.style.display = 'none';
-                }
-            },
-
-            // 結帳頁面的購物車渲染
-            renderCheckoutCart() {
-                const container = document.getElementById('cartItemsContainer');
-                container.innerHTML = '';
+                document.getElementById('cartBadge').innerText = count;
+                document.getElementById('cartBadge').classList.toggle('hidden', count === 0);
+                document.getElementById('mobileBar').classList.toggle('hidden', count === 0 || document.getElementById('checkoutView').classList.contains('hidden') === false);
+                document.getElementById('barTotal').innerText = 'NT$ ' + (total + 60);
+                document.getElementById('totalPrice').innerText = 'NT$ ' + (total + 60);
                 
-                let subtotal = 0;
-
-                this.data.products.forEach(p => {
-                    const qty = this.data.cart[p.id] || 0;
-                    if (qty > 0) {
-                        const price = parseInt(p.price.replace(/\D/g, '')) || 0;
-                        const itemTotal = price * qty;
-                        subtotal += itemTotal;
-                        
-                        const html = `
-                            <div class="flex justify-between items-center py-3 border-b border-gray-200/50 last:border-0">
-                                <div>
-                                    <p class="font-medium text-primary">${p.name}</p>
-                                    <p class="text-xs text-graytext">${p.price} x ${qty}</p>
-                                </div>
-                                <div class="font-bold text-secondary">
-                                    NT$ ${itemTotal}
-                                </div>
-                            </div>
-                        `;
-                        container.insertAdjacentHTML('beforeend', html);
-                    }
-                });
-
-                const shipping = parseInt(this.data.settings.shipping_fee) || 60;
-                const total = subtotal + shipping;
-
-                document.getElementById('cartSubtotal').innerText = `NT$ ${subtotal}`;
-                document.getElementById('cartShipping').innerText = `NT$ ${shipping}`;
-                document.getElementById('cartTotal').innerText = `NT$ ${total}`;
-                document.getElementById('successTotal').innerText = `NT$ ${total}`;
-            },
-
-            // 送出訂單
-            async submitOrder() {
-                const submitBtn = document.getElementById('submitBtn');
-                
-                // 收集表單資料
-                const formData = {
-                    customer_name: document.getElementById('formName').value.trim(),
-                    ig_account: document.getElementById('formIG').value.trim(),
-                    phone: document.getElementById('formPhone').value.trim(),
-                    email: document.getElementById('formEmail').value.trim(),
-                    cvs_store_name: document.getElementById('formStore').value.trim(),
-                };
-
-                // 簡單驗證
-                if (!formData.customer_name || !formData.ig_account || !formData.phone || !formData.cvs_store_name) {
-                    this.showToast("請填寫所有必填欄位");
-                    return;
-                }
-
-                // 準備訂單商品資料
-                const orderItems = [];
-                let subtotal = 0;
-                this.data.products.forEach(p => {
-                    const qty = this.data.cart[p.id] || 0;
-                    if (qty > 0) {
-                        const price = parseInt(p.price.replace(/\D/g, '')) || 0;
-                        subtotal += price * qty;
-                        orderItems.push({
-                            id: p.id,
-                            name: p.name,
-                            price: price,
-                            quantity: qty,
-                            total: price * qty
-                        });
-                    }
-                });
-
-                const shipping = parseInt(this.data.settings.shipping_fee) || 60;
-                
-                const payload = {
-                    action: 'submitOrder',
-                    ...formData,
-                    items_json: JSON.stringify(orderItems),
-                    subtotal: subtotal,
-                    shipping_fee: shipping,
-                    total_price: subtotal + shipping
-                };
-
-                // UI 狀態：載入中
-                submitBtn.disabled = true;
-                submitBtn.innerHTML = '<div class="loader w-5 h-5 border-2 border-white border-top-transparent"></div> 處理中...';
-
-                try {
-                    if (!GAS_API_URL) {
-                        // 模擬 API 延遲與成功
-                        await new Promise(r => setTimeout(r, 1500));
-                        this.finishOrder("TEST-" + Math.floor(Math.random()*10000));
-                        return;
-                    }
-
-                    // 使用 fetch (POST) 送到 GAS。
-                    // 注意：為了避免 CORS preflight，GAS 建議使用 text/plain 或 POST x-www-form-urlencoded
-                    const response = await fetch(GAS_API_URL, {
-                        method: 'POST',
-                        body: JSON.stringify(payload)
-                        // 不設定 Content-Type application/json 可繞過部分瀏覽器 CORS 嚴格檢查，GAS 依然能收到 e.postData.contents
+                // 渲染結帳清單
+                const list = document.getElementById('cartItems');
+                if(list) {
+                    list.innerHTML = '';
+                    this.state.products.forEach(p => {
+                        const q = this.state.cart[p.id] || 0;
+                        if(q > 0) list.insertAdjacentHTML('beforeend', `<div class="flex justify-between"><span>${p.name} x ${q}</span><span>NT$ ${p.price * q}</span></div>`);
                     });
-                    
-                    const result = await response.json();
-                    
-                    if (result.status === 'success') {
-                        this.finishOrder(result.order_id);
-                    } else {
-                        throw new Error(result.message || "訂單送出失敗");
-                    }
-                } catch (error) {
-                    console.error("提交失敗:", error);
-                    this.showToast("發生錯誤，請重試或私訊 IG 聯繫我們。");
-                    submitBtn.disabled = false;
-                    submitBtn.innerHTML = '確認送出訂單';
+                    list.insertAdjacentHTML('beforeend', `<div class="flex justify-between text-graytext text-sm"><span>7-11 運費</span><span>NT$ 60</span></div>`);
                 }
             },
-
-            // 訂單完成處理
-            finishOrder(orderId) {
-                document.getElementById('successOrderId').innerText = orderId;
-                // 清空購物車
-                this.data.cart = {};
-                this.updateCartUI();
-                this.navigate('success');
-            },
-
-            // 共用工具：吐司提示
-            showToast(msg) {
-                const toast = document.getElementById('toast');
-                toast.innerText = msg;
-                toast.classList.remove('opacity-0');
-                setTimeout(() => {
-                    toast.classList.add('opacity-0');
-                }, 3000);
-            },
-
-            // 共用工具：複製文字 (使用舊版寫法以相容更多 IG 瀏覽器環境)
-            copyText(elementId) {
-                const text = document.getElementById(elementId).innerText;
-                const textArea = document.createElement("textarea");
-                textArea.value = text;
-                document.body.appendChild(textArea);
-                textArea.select();
-                try {
-                    document.execCommand('copy');
-                    this.showToast("帳號已複製！");
-                } catch (err) {
-                    this.showToast("複製失敗，請手動選取複製");
-                }
-                document.body.removeChild(textArea);
-            },
-
-            // 測試環境用的假資料
-            loadMockData() {
-                this.data.settings = {
-                    site_name: "豪豪出包",
-                    brand_description: "Sourdough Cracker \n酸種酵母餅乾",
-                    order_instructions: "2026年3月，酵母餅乾IG快閃試賣。\n全手工小量生產，謝謝支持與耐心等待，希望大家會喜歡！\n\n開放預訂：3/21 下午4:00\n截止預訂：3/22 上午11:00\n預計3/27陸續出貨\n\n(1) 全手工製作，餅乾形狀、大小和烤色不會全都一致\n(2) 本次訂單一律以「7-ELEVEN 常溫交貨便」寄送\n(3) 訂購時請確認中文姓名、手機和門市名稱已填寫正確",
-                    brand_statement: "酵母餅乾成分很簡單，核心元素就是酸種酵母。\n酸種酵母不是商業用的速發酵母粉，他是利用麵粉和水，經過長時間培養而來的。而酵母裡的乳酸菌會產生天然的酸香風味，成為酵母餅乾最核心的味道來源。",
-                    shipping_fee: 60,
-                    bank_account: "台新銀行 (812) 28881000488641",
-                    bank_reminder: "匯款時請註明訂購人姓名\n完成後請截圖私訊 IG 確認"
+            async submitOrder() {
+                const btn = document.getElementById('submitBtn');
+                btn.disabled = true; btn.innerText = "SENDING...";
+                const orderData = {
+                    customer_name: document.getElementById('name').value,
+                    ig_account: document.getElementById('ig').value,
+                    phone: document.getElementById('phone').value,
+                    email: document.getElementById('email').value,
+                    cvs_store_name: document.getElementById('store').value,
+                    items_json: JSON.stringify(this.state.cart),
+                    subtotal: 0, shipping_fee: 60, total_price: 0 // GAS 會重新計算，這裡傳簡單數值
                 };
-                this.data.products = [
-                    {
-                        id: 1, name: "百里香酵母餅乾", weight_grams: 135, price: "150元", max_quantity: 3, is_visible: true, sort_order: 1,
-                        description: "廚房西式香料的常備品，百里香木質調的氣息清爽而有個性，帶著一絲薄荷的醒腦感...\n\n有朋友第一次吃到，給了很有趣的回饋「很像在吃了一道正餐料理。」",
-                        ingredients: "天然酵母、中筋麵粉、海鹽、奶油、乾燥百里香、葵花油\n本產品含有麩質穀物（小麥）、乳品",
-                        main_image_url: "https://images.unsplash.com/photo-1558961363-fa8fdf82db35?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80"
-                    },
-                    {
-                        id: 2, name: "羅勒酵母餅乾", weight_grams: 135, price: "160元", max_quantity: 3, is_visible: true, sort_order: 2,
-                        description: "經典的羅勒香氣與酵母微酸的絕妙搭配，口感酥脆不油膩。",
-                        ingredients: "天然酵母、中筋麵粉、海鹽、奶油、乾燥羅勒",
-                        main_image_url: "https://images.unsplash.com/photo-1490474504059-1f1e15ab98cb?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80"
-                    }
-                ];
+                try {
+                    const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(orderData) }).then(r => r.json());
+                    document.getElementById('orderIdDisplay').innerText = "ORDER ID: " + res.order_id;
+                    this.navigate('success');
+                } catch(e) { alert("提交失敗"); btn.disabled = false; btn.innerText = "RETRY"; }
+            },
+            copyText(id) {
+                const t = document.getElementById(id).innerText;
+                navigator.clipboard.writeText(t); alert("已複製匯款帳號");
             }
         };
-
-        // 啟動應用程式
-        window.onload = () => app.init();
-
+        app.init();
     </script>
 </body>
 </html>
