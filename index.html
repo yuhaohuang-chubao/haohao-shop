@@ -2,310 +2,622 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>豪豪出包 | 時間萃取的酸種滋味</title>
+    <!-- 針對 IG 瀏覽器優化：禁止使用者縮放導致版面跑位 -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
+    <title>豪豪出包 | 酵母餅乾訂購</title>
+    
+    <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&family=Noto+Sans+TC:wght@400;700&family=Noto+Serif+TC:wght@700&family=Playfair+Display:wght@700&display=swap" rel="stylesheet">
     
-    <!-- 重要修正：加上 defer 屬性，確保 HTML 解析完成後才啟動腳本，解決畫面空白問題 -->
-    <script src="https://unpkg.com/alpinejs@3.x.x/dist/cdn.min.js"></script>
-    
+    <!-- Tailwind Custom Configuration -->
     <script>
-        window.tailwind.config = {
+        tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        brandBg: '#D9C5B2',
-                        brandSurface: '#F3F3F4',
-                        brandTextBold: '#14110F',
-                        brandTextMain: '#34312D',
-                        brandAccent: '#B37BA4',
-                        brandLavender: '#DCCDE8',
+                        primary: '#14110F',
+                        secondary: '#34312D',
+                        graytext: '#7E7F83',
+                        sand: '#D9C5B2',
+                        bglight: '#F3F3F4',
+                        accent1: '#B37BA4',
+                        accent2: '#D99AC5',
+                        accent3: '#DCCDE8',
                     },
                     fontFamily: {
-                        serif: ['"Playfair Display"', '"Noto Serif TC"', 'serif'],
-                        sans: ['Inter', '"Noto Sans TC"', 'sans-serif'],
+                        sans: ['"Noto Sans TC"', 'sans-serif'],
                     }
                 }
             }
         }
     </script>
+
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
     <style>
-        [x-cloak] { display: none !important; }
-        body { background-color: #D9C5B2; color: #34312D; overflow-x: hidden; -webkit-font-smoothing: antialiased; }
-        .glass-nav { backdrop-filter: blur(10px); background: rgba(243, 243, 244, 0.9); }
-        .product-desc { white-space: pre-line; } 
-        .active-scale:active { transform: scale(0.96); transition: transform 0.1s; }
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #ffffff; color: #14110F; }
+        /* 隱藏數字輸入框的上下箭頭 */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { -webkit-appearance: none; margin: 0; }
+        input[type=number] { -moz-appearance: textfield; }
+        
+        /* 載入動畫 */
+        .loader { border: 3px solid #F3F3F4; border-top: 3px solid #D9C5B2; border-radius: 50%; width: 24px; height: 24px; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        /* 漸變顯示動畫 */
+        .fade-in { animation: fadeIn 0.4s ease-in-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
     </style>
 </head>
-<body class="font-sans antialiased" x-data="cookieShop">
+<body class="antialiased pb-24 selection:bg-sand selection:text-white">
 
-    <!-- 導覽列 -->
-    <nav class="sticky top-0 z-50 glass-nav shadow-sm px-4 py-3 flex justify-between items-center">
-        <!-- 雙擊 LOGO 進入管理員面板 -->
-        <div class="flex items-center gap-2 cursor-pointer select-none" @dblclick="showAdmin = true">
-            <div class="w-10 h-10 bg-brandAccent rounded-full flex items-center justify-center text-white font-bold font-serif shadow-sm">豪</div>
-            <h1 class="font-serif text-xl font-bold tracking-tight text-brandTextBold">豪豪出包</h1>
-        </div>
-        <div class="flex items-center gap-4">
-            <button @click="showCart = true" class="relative p-2 text-brandTextMain active-scale">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
-                </svg>
-                <span x-show="cartCount > 0" x-cloak x-text="cartCount" class="absolute top-0 right-0 bg-brandAccent text-white text-[10px] w-4 h-4 rounded-full flex items-center justify-center"></span>
+    <!-- 頂部導覽列 / Header -->
+    <header class="sticky top-0 z-50 bg-white/90 backdrop-blur-md border-b border-gray-100">
+        <div class="max-w-3xl mx-auto px-4 h-16 flex items-center justify-between">
+            <div class="font-bold text-xl tracking-wider cursor-pointer" onclick="app.navigate('home')">
+                豪豪出包
+            </div>
+            <button onclick="app.navigate('checkout')" class="relative p-2 text-primary hover:text-sand transition-colors" id="navCartBtn">
+                <i class="fa-solid fa-cart-shopping text-xl"></i>
+                <span id="cartBadge" class="absolute top-0 right-0 bg-accent1 text-white text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center hidden">0</span>
             </button>
-        </div>
-    </nav>
-
-    <!-- 主視覺 (品牌形象圖) -->
-    <header class="relative w-full h-[45vh] min-h-[350px] overflow-hidden">
-        <img src="https://images.unsplash.com/photo-1509440159596-0249088772ff?auto=format&fit=crop&q=80&w=1200" alt="" class="w-full h-full object-cover">
-        <div class="absolute inset-0 bg-black/40 flex flex-col justify-center items-center text-white p-6 text-center">
-            <p class="text-xs tracking-[0.4em] uppercase mb-3 font-light italic">時間萃取的酸種滋味</p>
-            <h2 class="font-serif text-4xl mb-4 leading-tight">每一片都是驚喜</h2>
-            <div class="w-12 h-[1px] bg-white/50 mb-5"></div>
-            <p class="max-w-[280px] text-sm leading-relaxed opacity-90">堅持純天然、長時發酵，將大地的饋贈裝進每一包餅乾中。</p>
         </div>
     </header>
 
-    <!-- 狀態列 -->
-    <div x-show="!isOrderOpen" x-cloak class="bg-brandTextBold text-white text-center py-3 text-xs font-bold sticky top-[64px] z-40">
-        ● 目前訂單已截止，歡迎瀏覽產品資訊
+    <!-- 吐司提示 (Toast) 用於取代 alert() -->
+    <div id="toast" class="fixed top-20 left-1/2 transform -translate-x-1/2 bg-secondary text-white px-6 py-3 rounded-full shadow-lg z-50 transition-opacity duration-300 opacity-0 pointer-events-none text-sm whitespace-nowrap">
+        提示訊息
     </div>
 
-    <!-- 產品清單 -->
-    <main class="max-w-xl mx-auto p-5 pb-32 text-brandTextMain">
-        <div class="grid grid-cols-1 gap-12">
-            <template x-for="product in products" :key="product.id">
-                <div class="bg-brandSurface rounded-[2.5rem] overflow-hidden shadow-sm border border-black/5 flex flex-col">
-                    <div class="aspect-[4/3] bg-gray-200 overflow-hidden relative">
-                        <img :src="getImage(product)" :alt="product.name" class="w-full h-full object-cover">
-                        <div class="absolute top-4 right-4 bg-white/90 backdrop-blur px-3 py-1 rounded-full text-[10px] font-bold text-brandAccent" x-text="product.weight"></div>
+    <!-- 應用程式掛載點 -->
+    <main id="app" class="max-w-3xl mx-auto px-4 py-8 min-h-[80vh] relative">
+        <!-- 初始載入畫面 -->
+        <div id="loadingView" class="flex flex-col items-center justify-center h-64 text-graytext">
+            <div class="loader mb-4"></div>
+            <p>正在準備新鮮的酵母餅乾...</p>
+        </div>
+
+        <!-- 頁面 1: 首頁 (商品列表) -->
+        <div id="homeView" class="hidden fade-in">
+            <!-- 視覺與品牌 -->
+            <section class="mb-16 text-center">
+                <h1 class="text-3xl md:text-4xl font-light mb-4 text-primary tracking-widest" id="brandDescTitle">Sourdough Cracker</h1>
+                <p class="text-graytext text-sm tracking-widest mb-8">酸種酵母餅乾</p>
+                <div class="w-full h-64 md:h-96 bg-bglight rounded-2xl mb-8 overflow-hidden flex items-center justify-center">
+                    <!-- Placeholder for Main Visual, you can replace src later -->
+                    <img src="https://images.unsplash.com/photo-1590080875515-8a3a8dc5735e?ixlib=rb-4.0.3&auto=format&fit=crop&w=800&q=80" alt="主要視覺圖" class="w-full h-full object-cover opacity-90">
+                </div>
+                
+                <div class="bg-bglight/50 rounded-2xl p-6 md:p-10 text-left text-sm md:text-base leading-relaxed text-secondary whitespace-pre-line" id="orderInstructions">
+                    <!-- 訂購說明渲染區 -->
+                </div>
+            </section>
+
+            <!-- 商品列表 -->
+            <section id="productsContainer" class="space-y-16 mb-16">
+                <!-- 商品卡片由 JS 動態生成 -->
+            </section>
+
+            <!-- 品牌聲明 -->
+            <section class="border-t border-gray-200 pt-16 mb-8 text-center px-4">
+                <h3 class="text-xl font-medium mb-6 text-primary">關於酵母餅乾</h3>
+                <div class="text-graytext text-sm leading-relaxed whitespace-pre-line text-left md:text-center max-w-2xl mx-auto" id="brandStatement">
+                    <!-- 品牌聲明渲染區 -->
+                </div>
+            </section>
+            
+            <!-- 懸浮購物車按鈕 (Mobile Friendly) -->
+            <div class="fixed bottom-6 left-1/2 transform -translate-x-1/2 w-[90%] max-w-sm z-40">
+                <button onclick="app.navigate('checkout')" class="w-full bg-primary text-white py-4 rounded-full shadow-2xl font-medium tracking-wider flex justify-between items-center px-8 hover:bg-secondary transition-colors" id="floatingCartBtn" style="display: none;">
+                    <span>前往結帳</span>
+                    <span id="floatingCartTotal" class="font-bold">NT$ 0</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- 頁面 2: 結帳頁面 -->
+        <div id="checkoutView" class="hidden fade-in">
+            <h2 class="text-2xl font-medium mb-8 text-primary border-b pb-4">訂單確認與填寫</h2>
+            
+            <!-- 購物車清單 -->
+            <div class="mb-10">
+                <h3 class="text-lg font-medium mb-4">您訂購的餅乾</h3>
+                <div id="cartItemsContainer" class="bg-bglight rounded-2xl p-4 md:p-6 mb-4">
+                    <!-- 購物車項目動態生成 -->
+                </div>
+                
+                <!-- 金額計算 -->
+                <div class="flex justify-between items-center text-sm text-graytext mb-2 px-2">
+                    <span>商品小計</span>
+                    <span id="cartSubtotal">NT$ 0</span>
+                </div>
+                <div class="flex justify-between items-center text-sm text-graytext mb-4 px-2">
+                    <span>7-11 常溫交貨便 運費</span>
+                    <span id="cartShipping">NT$ 60</span>
+                </div>
+                <div class="flex justify-between items-center text-lg font-bold text-primary border-t border-gray-200 pt-4 px-2">
+                    <span>總計金額</span>
+                    <span id="cartTotal" class="text-accent1">NT$ 0</span>
+                </div>
+            </div>
+
+            <!-- 訂購者資料表單 -->
+            <div class="bg-white border border-gray-100 shadow-sm rounded-2xl p-6 md:p-8 mb-8">
+                <h3 class="text-lg font-medium mb-6">訂購人資訊</h3>
+                <form id="orderForm" onsubmit="event.preventDefault(); app.submitOrder();">
+                    <div class="space-y-5">
+                        <div>
+                            <label class="block text-sm font-medium text-secondary mb-1">中文姓名 <span class="text-red-500">*</span></label>
+                            <input type="text" id="formName" required class="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-sand focus:ring-1 focus:ring-sand outline-none transition-colors" placeholder="請輸入真實姓名">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-secondary mb-1">Instagram 帳號 <span class="text-red-500">*</span></label>
+                            <input type="text" id="formIG" required class="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-sand focus:ring-1 focus:ring-sand outline-none transition-colors" placeholder="@your_account">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-secondary mb-1">聯絡手機 <span class="text-red-500">*</span></label>
+                            <input type="tel" id="formPhone" required pattern="09\d{8}" class="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-sand focus:ring-1 focus:ring-sand outline-none transition-colors" placeholder="09xxxxxxxx">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-secondary mb-1">Email <span class="text-red-500">*</span></label>
+                            <input type="email" id="formEmail" required class="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-sand focus:ring-1 focus:ring-sand outline-none transition-colors" placeholder="聯絡用電子信箱">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-secondary mb-1">7-11 門市名稱與店號 <span class="text-red-500">*</span></label>
+                            <input type="text" id="formStore" required class="w-full px-4 py-3 rounded-lg border border-gray-200 focus:border-sand focus:ring-1 focus:ring-sand outline-none transition-colors" placeholder="例如：板站門市 (店號: 123456)">
+                            <p class="text-xs text-graytext mt-2"><a href="https://emap.pcsc.com.tw/" target="_blank" class="text-sand underline hover:text-secondary">點此查詢 7-11 門市</a></p>
+                        </div>
                     </div>
                     
-                    <div class="p-8">
-                        <div class="flex justify-between items-start mb-4">
-                            <h3 class="font-serif text-2xl font-bold text-brandTextBold" x-text="product.name"></h3>
-                            <span class="text-xl font-bold text-brandAccent" x-text="`$${product.price}`"></span>
-                        </div>
-                        <p class="product-desc text-sm leading-relaxed mb-6" x-text="product.description"></p>
-                        
-                        <div x-data="{ open: false }" class="mb-8">
-                            <button @click="open = !open" class="text-[10px] font-bold uppercase tracking-widest text-gray-400 flex items-center gap-1">
-                                顯示成分來源 <span x-text="open ? '↑' : '↓'"></span>
-                            </button>
-                            <p x-show="open" x-cloak x-text="product.ingredients" class="mt-2 text-xs text-gray-400 leading-loose bg-white/50 p-3 rounded-xl"></p>
-                        </div>
+                    <div class="mt-10 flex gap-4">
+                        <button type="button" onclick="app.navigate('home')" class="w-1/3 py-4 rounded-xl font-medium text-secondary bg-bglight hover:bg-gray-200 transition-colors">
+                            返回
+                        </button>
+                        <button type="submit" id="submitBtn" class="w-2/3 py-4 rounded-xl font-medium text-white bg-primary hover:bg-secondary transition-colors flex justify-center items-center gap-2">
+                            <span>確認送出訂單</span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
 
-                        <div class="mt-auto">
-                            <template x-if="isOrderOpen">
-                                <div class="flex items-center gap-3">
-                                    <template x-if="getItemCount(product.id) === 0">
-                                        <button @click="addToCart(product)" class="w-full bg-brandAccent text-white py-4 rounded-2xl text-sm font-bold active-scale shadow-lg">
-                                            加入購物車
-                                        </button>
-                                    </template>
-                                    <template x-if="getItemCount(product.id) > 0">
-                                        <div class="flex items-center justify-between w-full bg-white rounded-2xl p-1 border border-brandAccent/10">
-                                            <button @click="updateQty(product.id, -1)" class="w-12 h-12 flex items-center justify-center text-brandAccent font-bold active-scale">－</button>
-                                            <span x-text="getItemCount(product.id)" class="font-bold text-brandTextBold text-lg"></span>
-                                            <button @click="updateQty(product.id, 1)" class="w-12 h-12 flex items-center justify-center text-brandAccent font-bold active-scale">＋</button>
-                                        </div>
-                                    </template>
-                                </div>
-                            </template>
-                            <template x-if="!isOrderOpen">
-                                <div class="text-center py-4 px-4 bg-gray-200 rounded-2xl text-xs text-gray-500 font-bold italic">目前非收單時段</div>
-                            </template>
-                        </div>
+        <!-- 頁面 3: 成功與匯款資訊頁面 -->
+        <div id="successView" class="hidden fade-in text-center py-10">
+            <div class="w-20 h-20 bg-green-50 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i class="fa-solid fa-check text-4xl"></i>
+            </div>
+            <h2 class="text-2xl font-medium mb-2 text-primary">訂單已送出！</h2>
+            <p class="text-graytext mb-8">您的訂單編號為：<span id="successOrderId" class="font-bold text-secondary"></span></p>
+            
+            <div class="bg-bglight rounded-2xl p-6 md:p-8 text-left max-w-md mx-auto mb-8 shadow-sm">
+                <h3 class="text-lg font-medium mb-4 border-b border-gray-200 pb-2">匯款資訊</h3>
+                <div class="mb-4">
+                    <p class="text-sm text-graytext mb-1">銀行帳號</p>
+                    <div class="flex items-center justify-between">
+                        <p class="text-lg font-medium text-primary select-all" id="bankAccount">--</p>
+                        <button onclick="app.copyText('bankAccount')" class="text-sand hover:text-secondary p-2" title="複製帳號">
+                            <i class="fa-regular fa-copy"></i>
+                        </button>
                     </div>
                 </div>
-            </template>
+                <div class="mb-4">
+                    <p class="text-sm text-graytext mb-1">匯款總額</p>
+                    <p class="text-2xl font-bold text-accent1" id="successTotal">NT$ 0</p>
+                </div>
+                <div class="text-sm text-secondary bg-white p-4 rounded-lg border border-gray-100 whitespace-pre-line" id="bankReminder">
+                    <!-- 匯款提醒渲染區 -->
+                </div>
+            </div>
+            
+            <button onclick="window.location.reload()" class="text-sand underline hover:text-primary transition-colors">
+                回到首頁
+            </button>
         </div>
     </main>
 
-    <!-- 購物車 Modal (略過中間邏輯，與之前相同) -->
-    <div x-show="showCart" x-cloak class="fixed inset-0 z-[100] flex items-end justify-center">
-        <div @click="showCart = false" class="absolute inset-0 bg-black/60 backdrop-blur-sm"></div>
-        <div class="relative bg-white w-full max-w-lg rounded-t-[3rem] p-8 shadow-2xl overflow-y-auto max-h-[85vh]">
-            <div class="w-12 h-1 bg-gray-200 rounded-full mx-auto mb-8"></div>
-            <h3 class="text-3xl font-serif font-bold text-brandTextBold mb-8 text-center">購物清單</h3>
-            <div x-show="cart.length === 0" class="text-center py-16 text-gray-300">清單目前是空的</div>
-            <div x-show="cart.length > 0" x-cloak class="space-y-6">
-                <template x-for="item in cart" :key="item.id">
-                    <div class="flex justify-between items-center border-b border-gray-50 pb-4">
-                        <div class="flex-1">
-                            <p class="font-bold" x-text="item.name"></p>
-                            <p class="text-xs text-brandAccent" x-text="`$${item.price} x ${item.qty}`"></p>
-                        </div>
-                        <div class="flex items-center gap-4 bg-gray-50 rounded-xl p-1">
-                            <button @click="updateQty(item.id, -1)" class="w-8 h-8">-</button>
-                            <span x-text="item.qty"></span>
-                            <button @click="updateQty(item.id, 1)" class="w-8 h-8">+</button>
-                        </div>
-                    </div>
-                </template>
-                <div class="bg-brandSurface p-6 rounded-3xl space-y-2 mt-8">
-                    <div class="flex justify-between text-sm"><span>小計</span><span x-text="`$${subtotal}`"></span></div>
-                    <div class="flex justify-between text-sm"><span>運費</span><span>$60</span></div>
-                    <div class="flex justify-between font-bold text-xl pt-4 border-t text-brandAccent"><span>總計</span><span x-text="`$${total}`"></span></div>
-                </div>
-                <button @click="step = 2; showCart = false" class="w-full bg-brandAccent text-white py-5 rounded-[2rem] font-bold shadow-xl active-scale">填寫配送資訊</button>
-            </div>
-        </div>
-    </div>
+    <footer class="text-center py-8 text-xs text-graytext border-t border-gray-100 mt-auto">
+        &copy; 2026 豪豪出包. All rights reserved.
+    </footer>
 
-    <!-- 收件資訊 (Step 2) -->
-    <div x-show="step === 2" x-cloak class="fixed inset-0 z-[110] bg-white overflow-y-auto p-8">
-        <div class="max-w-md mx-auto">
-            <button @click="step = 1; showCart = true" class="mb-8 text-gray-400 font-bold active-scale">← 返回</button>
-            <h3 class="text-3xl font-serif font-bold mb-8">收件資訊</h3>
-            <form @submit.prevent="submitOrder" class="space-y-6 text-sm">
-                <div><label class="font-bold text-gray-400 mb-2 block">中文姓名 *</label><input type="text" x-model="formData.customer_name" required class="w-full bg-gray-50 rounded-2xl p-4 outline-none"></div>
-                <div><label class="font-bold text-gray-400 mb-2 block">IG 帳號 *</label><input type="text" x-model="formData.ig_account" required class="w-full bg-gray-50 rounded-2xl p-4 outline-none"></div>
-                <div><label class="font-bold text-gray-400 mb-2 block">手機號碼 *</label><input type="tel" x-model="formData.phone" pattern="^09[0-9]{8}$" required class="w-full bg-gray-50 rounded-2xl p-4 outline-none"></div>
-                <div><label class="font-bold text-gray-400 mb-2 block">7-11 門市名稱 *</label><input type="text" x-model="formData.seven_eleven_store" required class="w-full bg-gray-50 rounded-2xl p-4 outline-none"></div>
-                <button type="submit" :disabled="submitting" class="w-full bg-brandAccent text-white py-5 rounded-[2rem] font-bold shadow-xl active-scale">確認下單</button>
-            </form>
-        </div>
-    </div>
-
-    <!-- 成功畫面 (Step 3) -->
-    <div x-show="step === 3" x-cloak class="fixed inset-0 z-[120] bg-brandBg flex items-center justify-center p-8 text-center">
-        <div class="bg-white p-10 rounded-[3rem] shadow-2xl max-w-sm w-full">
-            <div class="w-16 h-16 bg-green-50 text-green-500 rounded-full flex items-center justify-center mx-auto mb-6 font-bold">✓</div>
-            <h3 class="text-2xl font-serif font-bold mb-4">下單成功</h3>
-            <div class="bg-gray-50 p-6 rounded-2xl text-left text-xs mb-6">
-                <p>銀行：(000) 某某銀行</p>
-                <p>帳號：XXX-XXXX-XXXX-XXXX</p>
-                <p class="pt-4 font-bold text-brandAccent text-lg text-center">總額：$<span x-text="total"></span></p>
-            </div>
-            <p class="text-[10px] text-gray-400 mb-8 leading-relaxed italic">請於匯款後私訊 IG 告知，我們將為您安排製作。</p>
-            <button @click="location.reload()" class="text-brandAccent font-bold">返回首頁</button>
-        </div>
-    </div>
-
-    <!-- 管理後台 -->
-    <div x-show="showAdmin" x-cloak class="fixed inset-0 z-[200] flex items-center justify-center p-6 bg-black/90 backdrop-blur-md">
-        <div class="bg-white p-8 rounded-[2rem] w-full max-w-xs text-center">
-            <h3 class="font-serif font-bold text-2xl mb-6">管理後台</h3>
-            <input type="password" x-model="adminPassword" placeholder="管理密碼" class="w-full bg-gray-50 rounded-xl p-4 mb-4 text-center outline-none">
-            <button @click="toggleOrderStatus()" class="w-full py-4 bg-brandAccent text-white rounded-2xl font-bold mb-4">切換接單開關</button>
-            <button @click="showAdmin = false" class="text-gray-400 text-sm">關閉離開</button>
-        </div>
-    </div>
-
+    <!-- 應用程式邏輯 (Vanilla JS 單頁應用) -->
     <script>
-        const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxL1ehkro8AOL54SNv4-HtcowjpgJTfknQp_jkFu7IimwGSZBhdg5WSExppD4SEGu8v/exec';
+        /** * 設定區：請將此處替換為您部署 Google Apps Script 後獲得的 Web App URL
+         * @type {string}
+         */
+        const GAS_API_URL = "https://script.google.com/macros/s/AKfycbw8pc2DUZNLCNA4jBVPsCBvFtBmikvb_FWfFPygl_OUbfS4EXPoZhR7hW2PpNb1KlQSyA/exec"; 
 
-        document.addEventListener('alpine:init', () => {
-            Alpine.data('cookieShop', () => ({
-                isOrderOpen: true,
-                products: [
-                    { 
-                        id: 1, 
-                        name: '百里香酵母餅乾', 
-                        price: 135, 
-                        weight: '150g', 
-                        description: '廚房西式香料的常備品，百里香木質調的氣息清爽而有個性。入口先是鹽的提味，接著是奶油混合著百里香，變成圓潤鹹鮮的味道。', 
-                        ingredients: '天然酵母、中筋麵粉、海鹽、奶油、乾燥百里香、葵花油' 
-                    },
-                    { 
-                        id: 2, 
-                        name: '芝麻酵母餅乾', 
-                        price: 135, 
-                        weight: '150g', 
-                        description: '黑芝麻台灣人很熟悉，咬下的每一口化開的油香。醇厚的芝麻油脂與酵母發酵後的乳酸風味完美堆疊。', 
-                        ingredients: '天然酵母、中筋麵粉、海鹽、奶油、熟芝麻、葵花油' 
+        // === 內部狀態管理 ===
+        const app = {
+            data: {
+                products: [],
+                settings: {
+                    site_name: "豪豪出包",
+                    brand_description: "Sourdough Cracker \n酸種酵母餅乾",
+                    order_instructions: "載入中...",
+                    brand_statement: "載入中...",
+                    shipping_fee: 60,
+                    bank_account: "",
+                    bank_reminder: ""
+                },
+                cart: {}, // { productId: quantity }
+                currentPage: 'loading' // 'loading', 'home', 'checkout', 'success'
+            },
+
+            // 系統初始化
+            async init() {
+                try {
+                    // 如果沒有設定 API URL，使用模擬測試資料以供開發預覽
+                    if (!GAS_API_URL) {
+                        this.showToast("目前使用測試資料（請記得設定 GAS URL）");
+                        this.loadMockData();
+                    } else {
+                        const response = await fetch(GAS_API_URL + "?action=getData");
+                        const result = await response.json();
+                        if(result.status === 'success') {
+                            this.data.products = result.data.products;
+                            this.data.settings = result.data.settings;
+                        } else {
+                            throw new Error("API 回傳錯誤");
+                        }
                     }
-                ],
-                cart: [],
-                showCart: false,
-                step: 1,
-                submitting: false,
-                showAdmin: false,
-                adminPassword: '',
-                formData: { customer_name: '', ig_account: '', phone: '', seven_eleven_store: '' },
-
-                init() {
-                    this.fetchRemoteData();
-                },
-
-                async fetchRemoteData() {
-                    if (!GOOGLE_SCRIPT_URL || GOOGLE_SCRIPT_URL.includes('YOUR_GOOGLE')) return;
-                    try {
-                        const res = await fetch(GOOGLE_SCRIPT_URL);
-                        const data = await res.json();
-                        if (data.products && data.products.length > 0) this.products = data.products;
-                        if (data.config && data.config.isOrderOpen !== undefined) {
-                            this.isOrderOpen = String(data.config.isOrderOpen) === 'true';
-                        }
-                    } catch (e) { console.error("遠端讀取失敗"); }
-                },
-
-                getImage(product) {
-                    if (product.mainImg && product.mainImg.startsWith('http')) return product.mainImg;
-                    const fallbacks = {
-                        1: 'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?auto=format&fit=crop&q=80&w=600',
-                        2: 'https://images.unsplash.com/photo-1590080874088-eec64895b423?auto=format&fit=crop&q=80&w=600'
-                    };
-                    return fallbacks[product.id] || fallbacks[1];
-                },
-
-                getItemCount(id) {
-                    const item = this.cart.find(i => i.id == id);
-                    return item ? item.qty : 0;
-                },
-
-                addToCart(product) {
-                    if (!this.isOrderOpen) return;
-                    this.cart.push({ ...product, qty: 1 });
-                },
-
-                updateQty(id, delta) {
-                    const item = this.cart.find(i => i.id == id);
-                    if (item) {
-                        item.qty += delta;
-                        if (item.qty <= 0) this.cart = this.cart.filter(i => i.id != id);
-                    }
-                },
-
-                get cartCount() { return this.cart.reduce((sum, i) => sum + i.qty, 0); },
-                get subtotal() { return this.cart.reduce((sum, i) => sum + (i.price * i.qty), 0); },
-                get total() { return this.subtotal > 0 ? this.subtotal + 60 : 0; },
-
-                async submitOrder() {
-                    this.submitting = true;
-                    try {
-                        if (GOOGLE_SCRIPT_URL && !GOOGLE_SCRIPT_URL.includes('YOUR_GOOGLE')) {
-                            await fetch(GOOGLE_SCRIPT_URL, {
-                                method: 'POST',
-                                body: JSON.stringify({ action: 'submitOrder', ...this.formData, cart: this.cart, total: this.total })
-                            });
-                        }
-                        this.step = 3;
-                        this.cart = [];
-                    } catch (e) { alert('傳送失敗'); } finally { this.submitting = false; }
-                },
-
-                async toggleOrderStatus() {
-                    const newValue = !this.isOrderOpen;
-                    try {
-                        if (GOOGLE_SCRIPT_URL && !GOOGLE_SCRIPT_URL.includes('YOUR_GOOGLE')) {
-                            const res = await fetch(GOOGLE_SCRIPT_URL, {
-                                method: 'POST',
-                                body: JSON.stringify({ action: 'toggleOrder', password: this.adminPassword, value: newValue })
-                            });
-                            const result = await res.json();
-                            if (result.status !== 'success') throw new Error(result.message);
-                        }
-                        this.isOrderOpen = newValue;
-                        this.showAdmin = false;
-                        this.adminPassword = '';
-                    } catch (e) { alert(e.message || '操作失敗'); }
+                    this.renderSettings();
+                    this.renderProducts();
+                    this.navigate('home');
+                } catch (error) {
+                    console.error("初始化失敗:", error);
+                    this.showToast("資料載入失敗，請稍後再試或聯繫客服。");
+                    // 發生錯誤也載入模擬資料以免畫面空白
+                    this.loadMockData();
+                    this.renderSettings();
+                    this.renderProducts();
+                    this.navigate('home');
                 }
-            }));
-        });
+            },
+
+            // 路由切換
+            navigate(page) {
+                this.data.currentPage = page;
+                window.scrollTo(0, 0);
+                
+                document.getElementById('loadingView').classList.add('hidden');
+                document.getElementById('homeView').classList.add('hidden');
+                document.getElementById('checkoutView').classList.add('hidden');
+                document.getElementById('successView').classList.add('hidden');
+                document.getElementById('floatingCartBtn').style.display = 'none';
+
+                if (page === 'home') {
+                    document.getElementById('homeView').classList.remove('hidden');
+                    this.updateCartUI();
+                } else if (page === 'checkout') {
+                    if (Object.keys(this.data.cart).length === 0) {
+                        this.showToast("購物車是空的喔！");
+                        this.navigate('home');
+                        return;
+                    }
+                    document.getElementById('checkoutView').classList.remove('hidden');
+                    this.renderCheckoutCart();
+                } else if (page === 'success') {
+                    document.getElementById('successView').classList.remove('hidden');
+                }
+            },
+
+            // 渲染全域設定文字
+            renderSettings() {
+                document.title = `${this.data.settings.site_name} | 酵母餅乾訂購`;
+                document.getElementById('brandDescTitle').innerText = this.data.settings.site_name;
+                document.getElementById('orderInstructions').innerText = this.data.settings.order_instructions;
+                document.getElementById('brandStatement').innerText = this.data.settings.brand_statement;
+                document.getElementById('bankAccount').innerText = this.data.settings.bank_account;
+                document.getElementById('bankReminder').innerText = this.data.settings.bank_reminder;
+            },
+
+            // 渲染商品列表
+            renderProducts() {
+                const container = document.getElementById('productsContainer');
+                container.innerHTML = '';
+                
+                const visibleProducts = this.data.products
+                    .filter(p => String(p.is_visible).toUpperCase() === 'TRUE')
+                    .sort((a, b) => parseInt(a.sort_order) - parseInt(b.sort_order));
+
+                visibleProducts.forEach(product => {
+                    // Initialize cart state
+                    if(this.data.cart[product.id] === undefined) this.data.cart[product.id] = 0;
+                    
+                    const priceNum = parseInt(product.price.replace(/\D/g, '')) || 0; // fallback parse
+                    const imageSrc = product.main_image_url || 'https://images.unsplash.com/photo-1600857544200-b2f666a9a2ec?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80';
+
+                    const html = `
+                        <div class="flex flex-col md:flex-row gap-8 items-start">
+                            <!-- 圖片區塊 -->
+                            <div class="w-full md:w-1/2 aspect-square rounded-2xl overflow-hidden bg-bglight relative">
+                                <img src="${imageSrc}" alt="${product.name}" class="w-full h-full object-cover" onerror="this.src='https://images.unsplash.com/photo-1600857544200-b2f666a9a2ec?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80'">
+                                <div class="absolute bottom-4 right-4 bg-white/90 backdrop-blur text-primary text-xs font-bold px-3 py-1 rounded-full shadow-sm">
+                                    ${product.weight_grams}g
+                                </div>
+                            </div>
+                            
+                            <!-- 資訊與購買區塊 -->
+                            <div class="w-full md:w-1/2 flex flex-col justify-center">
+                                <h2 class="text-2xl font-bold mb-2 text-primary">${product.name}</h2>
+                                <p class="text-lg font-medium text-accent1 mb-6">${product.price}</p>
+                                
+                                <div class="text-secondary text-sm leading-relaxed mb-6 whitespace-pre-line">
+                                    ${product.description}
+                                </div>
+                                
+                                <div class="bg-bglight/50 p-4 rounded-xl mb-8">
+                                    <h4 class="text-xs font-bold text-graytext mb-2">成分說明</h4>
+                                    <p class="text-xs text-secondary whitespace-pre-line">${product.ingredients}</p>
+                                </div>
+                                
+                                <!-- 數量選擇器 -->
+                                <div class="flex items-center gap-4 border border-gray-200 rounded-xl p-2 w-max mb-2">
+                                    <button onclick="app.updateQuantity(${product.id}, -1, ${product.max_quantity})" class="w-10 h-10 flex items-center justify-center text-graytext hover:text-primary transition-colors disabled:opacity-30" id="btn-minus-${product.id}">
+                                        <i class="fa-solid fa-minus"></i>
+                                    </button>
+                                    <span class="w-10 text-center font-bold text-lg" id="qty-${product.id}">0</span>
+                                    <button onclick="app.updateQuantity(${product.id}, 1, ${product.max_quantity})" class="w-10 h-10 flex items-center justify-center text-graytext hover:text-primary transition-colors disabled:opacity-30" id="btn-plus-${product.id}">
+                                        <i class="fa-solid fa-plus"></i>
+                                    </button>
+                                </div>
+                                <p class="text-xs text-graytext mt-1">每人限購 ${product.max_quantity} 包</p>
+                            </div>
+                        </div>
+                    `;
+                    container.insertAdjacentHTML('beforeend', html);
+                });
+                this.updateCartUI();
+            },
+
+            // 更新商品數量
+            updateQuantity(productId, change, maxQty) {
+                let current = this.data.cart[productId] || 0;
+                let next = current + change;
+                
+                if (next < 0) next = 0;
+                if (next > maxQty) {
+                    this.showToast(`此款餅乾每人限購 ${maxQty} 包喔！`);
+                    next = maxQty;
+                }
+                
+                this.data.cart[productId] = next;
+                document.getElementById(`qty-${productId}`).innerText = next;
+                
+                this.updateCartUI();
+            },
+
+            // 更新全域購物車狀態與 UI (包含小圖示與懸浮按鈕)
+            updateCartUI() {
+                let totalItems = 0;
+                let totalPrice = 0;
+
+                this.data.products.forEach(p => {
+                    const qty = this.data.cart[p.id] || 0;
+                    totalItems += qty;
+                    if(qty > 0) {
+                        const price = parseInt(p.price.replace(/\D/g, '')) || 0;
+                        totalPrice += price * qty;
+                    }
+                    
+                    // Update buttons state
+                    const btnMinus = document.getElementById(`btn-minus-${p.id}`);
+                    const btnPlus = document.getElementById(`btn-plus-${p.id}`);
+                    if(btnMinus) btnMinus.disabled = qty <= 0;
+                    if(btnPlus) btnPlus.disabled = qty >= p.max_quantity;
+                });
+
+                // Header Badge
+                const badge = document.getElementById('cartBadge');
+                if (totalItems > 0) {
+                    badge.innerText = totalItems;
+                    badge.classList.remove('hidden');
+                } else {
+                    badge.classList.add('hidden');
+                }
+
+                // Floating Button
+                const floatingBtn = document.getElementById('floatingCartBtn');
+                if (this.data.currentPage === 'home' && totalItems > 0) {
+                    document.getElementById('floatingCartTotal').innerText = `NT$ ${totalPrice}`;
+                    floatingBtn.style.display = 'flex';
+                } else {
+                    floatingBtn.style.display = 'none';
+                }
+            },
+
+            // 結帳頁面的購物車渲染
+            renderCheckoutCart() {
+                const container = document.getElementById('cartItemsContainer');
+                container.innerHTML = '';
+                
+                let subtotal = 0;
+
+                this.data.products.forEach(p => {
+                    const qty = this.data.cart[p.id] || 0;
+                    if (qty > 0) {
+                        const price = parseInt(p.price.replace(/\D/g, '')) || 0;
+                        const itemTotal = price * qty;
+                        subtotal += itemTotal;
+                        
+                        const html = `
+                            <div class="flex justify-between items-center py-3 border-b border-gray-200/50 last:border-0">
+                                <div>
+                                    <p class="font-medium text-primary">${p.name}</p>
+                                    <p class="text-xs text-graytext">${p.price} x ${qty}</p>
+                                </div>
+                                <div class="font-bold text-secondary">
+                                    NT$ ${itemTotal}
+                                </div>
+                            </div>
+                        `;
+                        container.insertAdjacentHTML('beforeend', html);
+                    }
+                });
+
+                const shipping = parseInt(this.data.settings.shipping_fee) || 60;
+                const total = subtotal + shipping;
+
+                document.getElementById('cartSubtotal').innerText = `NT$ ${subtotal}`;
+                document.getElementById('cartShipping').innerText = `NT$ ${shipping}`;
+                document.getElementById('cartTotal').innerText = `NT$ ${total}`;
+                document.getElementById('successTotal').innerText = `NT$ ${total}`;
+            },
+
+            // 送出訂單
+            async submitOrder() {
+                const submitBtn = document.getElementById('submitBtn');
+                
+                // 收集表單資料
+                const formData = {
+                    customer_name: document.getElementById('formName').value.trim(),
+                    ig_account: document.getElementById('formIG').value.trim(),
+                    phone: document.getElementById('formPhone').value.trim(),
+                    email: document.getElementById('formEmail').value.trim(),
+                    cvs_store_name: document.getElementById('formStore').value.trim(),
+                };
+
+                // 簡單驗證
+                if (!formData.customer_name || !formData.ig_account || !formData.phone || !formData.cvs_store_name) {
+                    this.showToast("請填寫所有必填欄位");
+                    return;
+                }
+
+                // 準備訂單商品資料
+                const orderItems = [];
+                let subtotal = 0;
+                this.data.products.forEach(p => {
+                    const qty = this.data.cart[p.id] || 0;
+                    if (qty > 0) {
+                        const price = parseInt(p.price.replace(/\D/g, '')) || 0;
+                        subtotal += price * qty;
+                        orderItems.push({
+                            id: p.id,
+                            name: p.name,
+                            price: price,
+                            quantity: qty,
+                            total: price * qty
+                        });
+                    }
+                });
+
+                const shipping = parseInt(this.data.settings.shipping_fee) || 60;
+                
+                const payload = {
+                    action: 'submitOrder',
+                    ...formData,
+                    items_json: JSON.stringify(orderItems),
+                    subtotal: subtotal,
+                    shipping_fee: shipping,
+                    total_price: subtotal + shipping
+                };
+
+                // UI 狀態：載入中
+                submitBtn.disabled = true;
+                submitBtn.innerHTML = '<div class="loader w-5 h-5 border-2 border-white border-top-transparent"></div> 處理中...';
+
+                try {
+                    if (!GAS_API_URL) {
+                        // 模擬 API 延遲與成功
+                        await new Promise(r => setTimeout(r, 1500));
+                        this.finishOrder("TEST-" + Math.floor(Math.random()*10000));
+                        return;
+                    }
+
+                    // 使用 fetch (POST) 送到 GAS。
+                    // 注意：為了避免 CORS preflight，GAS 建議使用 text/plain 或 POST x-www-form-urlencoded
+                    const response = await fetch(GAS_API_URL, {
+                        method: 'POST',
+                        body: JSON.stringify(payload)
+                        // 不設定 Content-Type application/json 可繞過部分瀏覽器 CORS 嚴格檢查，GAS 依然能收到 e.postData.contents
+                    });
+                    
+                    const result = await response.json();
+                    
+                    if (result.status === 'success') {
+                        this.finishOrder(result.order_id);
+                    } else {
+                        throw new Error(result.message || "訂單送出失敗");
+                    }
+                } catch (error) {
+                    console.error("提交失敗:", error);
+                    this.showToast("發生錯誤，請重試或私訊 IG 聯繫我們。");
+                    submitBtn.disabled = false;
+                    submitBtn.innerHTML = '確認送出訂單';
+                }
+            },
+
+            // 訂單完成處理
+            finishOrder(orderId) {
+                document.getElementById('successOrderId').innerText = orderId;
+                // 清空購物車
+                this.data.cart = {};
+                this.updateCartUI();
+                this.navigate('success');
+            },
+
+            // 共用工具：吐司提示
+            showToast(msg) {
+                const toast = document.getElementById('toast');
+                toast.innerText = msg;
+                toast.classList.remove('opacity-0');
+                setTimeout(() => {
+                    toast.classList.add('opacity-0');
+                }, 3000);
+            },
+
+            // 共用工具：複製文字 (使用舊版寫法以相容更多 IG 瀏覽器環境)
+            copyText(elementId) {
+                const text = document.getElementById(elementId).innerText;
+                const textArea = document.createElement("textarea");
+                textArea.value = text;
+                document.body.appendChild(textArea);
+                textArea.select();
+                try {
+                    document.execCommand('copy');
+                    this.showToast("帳號已複製！");
+                } catch (err) {
+                    this.showToast("複製失敗，請手動選取複製");
+                }
+                document.body.removeChild(textArea);
+            },
+
+            // 測試環境用的假資料
+            loadMockData() {
+                this.data.settings = {
+                    site_name: "豪豪出包",
+                    brand_description: "Sourdough Cracker \n酸種酵母餅乾",
+                    order_instructions: "2026年3月，酵母餅乾IG快閃試賣。\n全手工小量生產，謝謝支持與耐心等待，希望大家會喜歡！\n\n開放預訂：3/21 下午4:00\n截止預訂：3/22 上午11:00\n預計3/27陸續出貨\n\n(1) 全手工製作，餅乾形狀、大小和烤色不會全都一致\n(2) 本次訂單一律以「7-ELEVEN 常溫交貨便」寄送\n(3) 訂購時請確認中文姓名、手機和門市名稱已填寫正確",
+                    brand_statement: "酵母餅乾成分很簡單，核心元素就是酸種酵母。\n酸種酵母不是商業用的速發酵母粉，他是利用麵粉和水，經過長時間培養而來的。而酵母裡的乳酸菌會產生天然的酸香風味，成為酵母餅乾最核心的味道來源。",
+                    shipping_fee: 60,
+                    bank_account: "台新銀行 (812) 28881000488641",
+                    bank_reminder: "匯款時請註明訂購人姓名\n完成後請截圖私訊 IG 確認"
+                };
+                this.data.products = [
+                    {
+                        id: 1, name: "百里香酵母餅乾", weight_grams: 135, price: "150元", max_quantity: 3, is_visible: true, sort_order: 1,
+                        description: "廚房西式香料的常備品，百里香木質調的氣息清爽而有個性，帶著一絲薄荷的醒腦感...\n\n有朋友第一次吃到，給了很有趣的回饋「很像在吃了一道正餐料理。」",
+                        ingredients: "天然酵母、中筋麵粉、海鹽、奶油、乾燥百里香、葵花油\n本產品含有麩質穀物（小麥）、乳品",
+                        main_image_url: "https://images.unsplash.com/photo-1558961363-fa8fdf82db35?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80"
+                    },
+                    {
+                        id: 2, name: "羅勒酵母餅乾", weight_grams: 135, price: "160元", max_quantity: 3, is_visible: true, sort_order: 2,
+                        description: "經典的羅勒香氣與酵母微酸的絕妙搭配，口感酥脆不油膩。",
+                        ingredients: "天然酵母、中筋麵粉、海鹽、奶油、乾燥羅勒",
+                        main_image_url: "https://images.unsplash.com/photo-1490474504059-1f1e15ab98cb?ixlib=rb-4.0.3&auto=format&fit=crop&w=500&q=80"
+                    }
+                ];
+            }
+        };
+
+        // 啟動應用程式
+        window.onload = () => app.init();
+
     </script>
 </body>
 </html>
