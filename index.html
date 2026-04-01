@@ -55,30 +55,6 @@
         // 1. 設定區：請填入您的 Google Apps Script URL
         // ==========================================
         const API_URL = "https://script.google.com/macros/s/AKfycbz27imZO4YtNtD2s8CKJh5GiiVf_lk8iwwNMbK3pDRfoJE9DEAUdon_vpf6TQTJzdB43w/exec"; 
-        
-        // Mock 資料 (當 API_URL 未設定或載入失敗時的備用資料)
-        const mockData = {
-            settings: {
-                site_name: "豪豪出包",
-                logo_image_url: "https://duk.tw/hMyFFB.svg",
-                main_image_url: "https://duk.tw/tNbPxp.jpg",
-                brand_description: "Sourdough Cracker\n酸種酵母餅乾\nArtisan Snacks",
-                brand_statement: "酵母餅乾成分很簡單，核心元素就是酸種酵母。\n\n酸種酵母不是商業用的速發酵母粉，他是利用麵粉和水，經過長時間培養而來的。而酵母裡的乳酸菌會產生天然的酸香風味，成為酵母餅乾最核心的味道來源。\n\n製作餅乾前酵母會先冷藏，讓乳酸的味道變得比較濃厚。這樣一來搭配不同香料，酸感和香氣就會更加平衡，咀嚼起來也會更有層次。",
-                order_instructions: "2026年3月，酵母餅乾IG快閃試賣。\n全手工小量生產，謝謝支持與耐心等待，希望大家會喜歡！\n\n開放預訂：3/21 下午4:00\n截止預訂：3/22 上午11:00\n預計3/27陸續出貨\n\n(1) 全手工製作，餅乾形狀、大小和烤色不會全都一致\n(2) 本次訂單一律以「7-ELEVEN 常溫交貨便」寄送\n(3) 訂購時請確認中文姓名、手機和門市名稱已填寫正確\n(4) 如果你不確定訂單或匯款是否完成，請私訊IG",
-                shipping_fee: "60",
-                shipping_method: "7-11常溫交貨便",
-                bank_account: "銀行代碼：822 (中國信託)\n帳號：123456789012\n戶名：王小明",
-                bank_reminder: "1. 請於收到IG確認訊息後 24 小時內完成匯款。\n2. 匯款後請主動私訊提供帳號末 5 碼對帳。\n3. 確認收款後才算訂單成立哦！",
-                footer_content: "© 2026 豪豪出包 All rights reserved."
-            },
-            products: [
-                { id: 1, name: "百里香酵母餅乾", price: 135, weight_grams: 150, is_visible: "TRUE", sort_order: 1, description: "廚房西式香料的常備品，百里香木質調的氣息清爽而有個性，帶著一絲薄荷的醒腦感，燉煮、或煎或烤各種肉類、油封還是烤蔬菜都百搭。所以，當初開始用酸種麵包的天然酵母做餅乾的時候，就很自然想到它。\n\n和餅乾麵團混合烘烤之後，百里香的香氣不會搶戲。隱約在麥香與堅果微焦香氣之下，好像淡淡的一股草地味。入口先是鹽的提味，接著是奶油混合著百里香，變成圓潤鹹鮮的味道。再多嚼幾下，就有酵母帶來的酸香浮現。豐富而層次平衡。\n\n有朋友第一次吃到，給了很有趣的回饋「很像在吃了一道正餐料理。」", ingredients: "天然酵母、中筋麵粉、海鹽、奶油、乾燥百里香、葵花油\n本產品含有麩質穀物（小麥）、乳品", main_image_url: "https://duk.tw/U7Fmfo.jpg", photo_1_url: "https://duk.tw/U7Fmfo.jpg", photo_2_url: "https://duk.tw/PMFyh6.jpg", max_quantity: 3 },
-                { id: 2, name: "芝麻酵母餅乾", price: 135, weight_grams: 150, is_visible: "TRUE", sort_order: 2, description: "黑芝麻台灣人很熟悉，即使放在酵母餅乾裡，我們還是認得。先是香氣，再來是在嘴裡咬一咬化開的油香，就已經讓人有默契地點點頭了！\n\n黑芝麻的油脂味其實很濃、很厚重，正好可以中和由酸種酵母所帶來的，比較輕盈、明亮的乳酸風味 (或有人覺得稍微醋酸感一點)。這個味道的加成效果，我是覺得滿加分的。酵母餅乾本體還是麵粉，烘烤後會帶點焦香，或是堅果的香氣甚至焦糖感。堆疊上芝麻烤起來的味道，大概是一種深焙的層次吧！\n\n很適合配茶，玄米茶之類的。", ingredients: "天然酵母、中筋麵粉、海鹽、奶油、熟芝麻、葵花油\n本產品含有麩質穀物（小麥）、乳品、芝麻", main_image_url: "https://duk.tw/PMFyh6.jpg", max_quantity: 3 },
-                { id: 3, name: "辣椒酵母餅乾", price: 135, weight_grams: 150, is_visible: "TRUE", sort_order: 3, description: "乾辣椒揉進麵團裡，會很明顯地染色。橘紅橘紅的麵團對我這個不太吃辣的人來說，可能會招架不住。\n\n經過實測，其實不會很辣，反而是溫和的辛香料風味，尾韻帶一點點麻。推薦給喜歡辛香料的你。", ingredients: "天然酵母、中筋麵粉、海鹽、奶油、乾辣椒粉、葵花油\n本產品含有麩質穀物（小麥）、乳品", main_image_url: "https://duk.tw/G9Fp4S.jpg", max_quantity: 3 },
-                { id: 4, name: "羅勒酵母餅乾", price: 135, weight_grams: 150, is_visible: "TRUE", sort_order: 4, description: "新鮮羅勒的香氣經過高溫烘烤後被完美鎖在餅乾中，就像在吃瑪格麗特披薩一樣的錯覺！鹹香唰嘴，不小心就會吃完一整包。", ingredients: "天然酵母、中筋麵粉、海鹽、奶油、乾燥羅勒葉、葵花油\n本產品含有麩質穀物（小麥）、乳品", main_image_url: "https://duk.tw/uBv0kX.jpg", max_quantity: 3 },
-                { id: 5, name: "肉桂酵母餅乾", price: 140, weight_grams: 150, is_visible: "FALSE", sort_order: 5, description: "採用兩種不同的肉桂粉調配而成，溫潤的香氣搭配酵母微微的酸度，是一款非常適合秋冬搭配熱紅酒或是黑咖啡的成熟大人味餅乾。", ingredients: "天然酵母、中筋麵粉、海鹽、奶油、肉桂粉、黑糖、葵花油\n本產品含有麩質穀物（小麥）、乳品", main_image_url: "https://duk.tw/uJgS7q.jpg", max_quantity: 3 }
-            ]
-        };
 
         // ==========================================
         // 2. SVG Icons
@@ -429,29 +405,35 @@
             const [view, setView] = useState('home'); // home, products, productDetail, cart, checkout, success
             const [activeProductId, setActiveProductId] = useState(null);
             
+            // 初始化狀態：清空 Mock 資料，並將 Loading 狀態設為 true
             const [cart, setCart] = useState([]);
-            const [settings, setSettings] = useState(mockData.settings);
-            const [products, setProducts] = useState(mockData.products);
+            const [settings, setSettings] = useState({});
+            const [products, setProducts] = useState([]);
             const [loading, setLoading] = useState(true);
+            const [error, setError] = useState(null);
             const [lastOrderId, setLastOrderId] = useState(null);
 
-            // 載入資料
+            // 載入資料 (向 Google Apps Script 請求)
             useEffect(() => {
                 const fetchData = async () => {
-                    if (!API_URL || API_URL === "https://script.google.com/macros/s/AKfycbz27imZO4YtNtD2s8CKJh5GiiVf_lk8iwwNMbK3pDRfoJE9DEAUdon_vpf6TQTJzdB43w/exec") {
-                        console.log("Using Mock Data (API_URL not set)");
-                        setLoading(false);
-                        return;
-                    }
                     try {
+                        // 檢查使用者是否已替換 API 網址
+                        if (!API_URL || API_URL === "https://script.google.com/macros/s/AKfycbz27imZO4YtNtD2s8CKJh5GiiVf_lk8iwwNMbK3pDRfoJE9DEAUdon_vpf6TQTJzdB43w/exec") {
+                            throw new Error("⚠️ 請記得替換 index.html 中的 API_URL 為您部署好的 Google Apps Script 網址！\n\n(目前還是預設值 YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL)");
+                        }
+
                         const response = await fetch(API_URL);
                         const result = await response.json();
+
                         if (result.status === 'success') {
                             setSettings(result.data.settings);
                             setProducts(result.data.products);
+                        } else {
+                            throw new Error(result.message || "讀取資料失敗，請確認 Apps Script 權限或表格格式。");
                         }
-                    } catch (error) {
-                        console.error("Fetch data failed, falling back to mock data", error);
+                    } catch (err) {
+                        console.error("Fetch data failed", err);
+                        setError(err.message);
                     } finally {
                         setLoading(false);
                     }
@@ -492,14 +474,12 @@
 
             // 送出訂單邏輯
             const submitOrder = async (orderData) => {
-                if (!API_URL || API_URL === "https://script.google.com/macros/s/AKfycbz27imZO4YtNtD2s8CKJh5GiiVf_lk8iwwNMbK3pDRfoJE9DEAUdon_vpf6TQTJzdB43w/exec") {
-                    console.log("Mock Submit:", orderData);
-                    setLastOrderId("ORD-MOCK-1234");
-                    setCart([]);
-                    return true;
-                }
-
                 try {
+                    if (!API_URL || API_URL === "https://script.google.com/macros/s/AKfycbz27imZO4YtNtD2s8CKJh5GiiVf_lk8iwwNMbK3pDRfoJE9DEAUdon_vpf6TQTJzdB43w/exec") {
+                        alert("尚未設定 API_URL，無法送出訂單。");
+                        return false;
+                    }
+
                     const response = await fetch(API_URL, {
                         method: 'POST',
                         body: JSON.stringify(orderData),
@@ -522,8 +502,21 @@
             const activeProduct = useMemo(() => products.find(p => p.id === activeProductId), [products, activeProductId]);
             const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
 
+            // 狀態畫面：載入中
             if (loading) {
                 return <div className="min-h-screen flex items-center justify-center text-highlight tracking-widest font-bold">載入中...</div>;
+            }
+
+            // 狀態畫面：發生錯誤 (通常是 API_URL 沒換，或是 GAS 部署失敗)
+            if (error) {
+                return (
+                    <div className="min-h-screen flex items-center justify-center p-6">
+                        <div className="bg-highlight-red bg-opacity-10 border border-highlight-red text-highlight-red p-6 rounded-2xl text-center shadow-sm">
+                            <h2 className="font-bold text-lg mb-2">無法連線至資料庫</h2>
+                            <p className="whitespace-pre-line text-sm">{error}</p>
+                        </div>
+                    </div>
+                );
             }
 
             return (
