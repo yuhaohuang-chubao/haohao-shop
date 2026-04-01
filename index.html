@@ -442,13 +442,14 @@
             const [view, setView] = useState('home'); // home, products, productDetail, cart, checkout, success
             const [activeProductId, setActiveProductId] = useState(null);
             
-            // 初始化狀態：清空 Mock 資料，並將 Loading 狀態設為 true
+            // 初始化狀態
             const [cart, setCart] = useState([]);
             const [settings, setSettings] = useState({});
             const [products, setProducts] = useState([]);
             const [loading, setLoading] = useState(true);
             const [error, setError] = useState(null);
             const [lastOrderId, setLastOrderId] = useState(null);
+            const [lastOrderTotal, setLastOrderTotal] = useState(0); // 新增：記住最後一筆訂單的總金額
 
             // 載入資料 (向 Google Apps Script 請求)
             useEffect(() => {
@@ -512,7 +513,6 @@
             // 送出訂單邏輯
             const submitOrder = async (orderData) => {
                 try {
-                    // 這裡也一樣，檢查是否等於預設字串
                     if (!API_URL || API_URL === "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL") {
                         alert("尚未設定 API_URL，無法送出訂單。");
                         return false;
@@ -524,8 +524,10 @@
                         headers: { 'Content-Type': 'text/plain;charset=utf-8' } // 避免 CORS OPTIONS 預檢
                     });
                     const result = await response.json();
+                    
                     if (result.status === 'success') {
                         setLastOrderId(result.orderId);
+                        setLastOrderTotal(orderData.total_price); // 紀錄下剛剛送出的總金額
                         setCart([]); // 清空購物車
                         return true;
                     }
@@ -569,7 +571,9 @@
                         {view === 'productDetail' && activeProduct && <ProductDetailView key={`product-${activeProductId}`} product={activeProduct} onNavigate={navigate} onAddToCart={addToCart} />}
                         {view === 'cart' && <CartView key="cart" cart={cart} updateQuantity={updateQuantity} removeItem={removeItem} settings={settings} onNavigate={navigate} />}
                         {view === 'checkout' && <CheckoutView key="checkout" cart={cart} settings={settings} onNavigate={navigate} onSubmitOrder={submitOrder} />}
-                        {view === 'success' && <SuccessView key="success" orderId={lastOrderId} onNavigate={navigate} settings={settings} />}
+                        
+                        {/* 這裡把 totalAmount 傳入給 SuccessView 顯示 */}
+                        {view === 'success' && <SuccessView key="success" orderId={lastOrderId} totalAmount={lastOrderTotal} onNavigate={navigate} settings={settings} />}
                     </AnimatePresence>
                 </div>
             );
