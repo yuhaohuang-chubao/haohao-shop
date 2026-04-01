@@ -417,8 +417,8 @@
             useEffect(() => {
                 const fetchData = async () => {
                     try {
-                        // 檢查使用者是否已替換 API 網址
-                        if (!API_URL || API_URL === "https://script.google.com/macros/s/AKfycbz27imZO4YtNtD2s8CKJh5GiiVf_lk8iwwNMbK3pDRfoJE9DEAUdon_vpf6TQTJzdB43w/exec") {
+                        // 檢查使用者是否已替換 API 網址 (這裡必須檢查是否等於預設字串，不能放真實網址)
+                        if (!API_URL || API_URL === "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL") {
                             throw new Error("⚠️ 請記得替換 index.html 中的 API_URL 為您部署好的 Google Apps Script 網址！\n\n(目前還是預設值 YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL)");
                         }
 
@@ -475,7 +475,8 @@
             // 送出訂單邏輯
             const submitOrder = async (orderData) => {
                 try {
-                    if (!API_URL || API_URL === "https://script.google.com/macros/s/AKfycbz27imZO4YtNtD2s8CKJh5GiiVf_lk8iwwNMbK3pDRfoJE9DEAUdon_vpf6TQTJzdB43w/exec") {
+                    // 這裡也一樣，檢查是否等於預設字串
+                    if (!API_URL || API_URL === "YOUR_GOOGLE_APPS_SCRIPT_WEB_APP_URL") {
                         alert("尚未設定 API_URL，無法送出訂單。");
                         return false;
                     }
