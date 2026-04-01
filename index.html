@@ -291,6 +291,16 @@
             });
             const [isSubmitting, setIsSubmitting] = useState(false);
 
+            // 在背景偷偷偵測消費者的作業系統
+            const getOS = () => {
+                const ua = window.navigator.userAgent;
+                if (/Android/i.test(ua)) return "Android";
+                if (/iPhone|iPad|iPod/i.test(ua)) return "iOS";
+                if (/Macintosh/i.test(ua)) return "Mac OS";
+                if (/Windows/i.test(ua)) return "Windows";
+                return "其他";
+            };
+
             const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
             const shippingFee = parseInt(settings.shipping_fee) || 60;
             
@@ -305,7 +315,8 @@
                     items: cart.map(item => ({ id: item.id, name: item.name, quantity: item.quantity, price: item.price })),
                     subtotal: subtotal,
                     shipping_fee: shippingFee,
-                    total_price: subtotal + shippingFee
+                    total_price: subtotal + shippingFee,
+                    admin_note: getOS() // 將偵測到的作業系統放入 admin_note 中送給後端
                 };
 
                 const success = await onSubmitOrder(orderData);
@@ -373,8 +384,8 @@
 
         // --- 成功頁面 ---
         const SuccessView = ({ orderId, onNavigate, settings }) => (
-            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="pt-32 px-6 text-center max-w-lg mx-auto">
-                <div className="w-24 h-24 bg-primary bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-8 text-highlight text-4xl">
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="pt-20 pb-32 px-6 text-center max-w-lg mx-auto">
+                <div className="w-24 h-24 bg-primary bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-6 text-highlight text-4xl">
                     🎉
                 </div>
                 <h2 className="text-2xl font-bold text-highlight mb-4">訂單已送出！</h2>
@@ -405,7 +416,11 @@
                     )}
                 </div>
 
-                <button onClick={() => onNavigate('home')} className="text-accent underline underline-offset-4 font-bold">返回首頁</button>
+                <div className="mt-8 mb-16">
+                    <button onClick={() => onNavigate('home')} className="text-accent hover:text-highlight transition-colors underline underline-offset-4 font-bold text-base px-4 py-2">
+                        返回首頁
+                    </button>
+                </div>
             </motion.div>
         );
 
