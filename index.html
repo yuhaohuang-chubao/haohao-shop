@@ -2,377 +2,505 @@
 <html lang="zh-Hant">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0">
-    <title>豪豪出包 Sourdough</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Sourdough Cracker 訂購網</title>
+    
+    <!-- 引入字體 -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- 引入圖示 -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- 引入 Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        primary: '#14110F', secondary: '#34312D', graytext: '#7E7F83',
-                        sand: '#D9C5B2', bglight: '#F3F3F4',
-                        accent1: '#B37BA4', accent2: '#D99AC5', accent3: '#DCCDE8',
+                        brand: {
+                            dark: '#14110F',
+                            grayDark: '#34312D',
+                            grayLight: '#7E7F83',
+                            primary: '#DDC9B4',
+                            primaryDark: '#BCAC9B',
+                            accent: '#7A6C5D',
+                            bg: '#F3F3F4',
+                            highlight1: '#2A3D45',
+                            highlight2: '#C17C74',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['"Noto Sans TC"', 'sans-serif'],
                     }
                 }
             }
         }
     </script>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+    <!-- 引入 Alpine.js -->
+    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
+
     <style>
-        * { border-radius: 0 !important; font-family: 'Noto Sans TC', sans-serif; }
-        body { background-color: #ffffff; color: #14110F; -webkit-font-smoothing: antialiased; }
-        .product-img { aspect-ratio: 3/2; object-fit: cover; width: 100%; background: #F3F3F4; }
-        .fade-in { animation: fadeIn 0.6s ease; }
-        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
-        .loader { border: 2px solid #F3F3F4; border-top: 2px solid #14110F; border-radius: 50% !important; width: 24px; height: 24px; animation: spin 1s linear infinite; }
-        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+        body { background-color: #E5E5E5; -webkit-tap-highlight-color: transparent; }
+        [x-cloak] { display: none !important; }
         
-        /* 摺疊動畫 */
-        .content-hidden { max-height: 0; overflow: hidden; transition: max-height 0.3s ease-out, opacity 0.2s; opacity: 0; }
-        .content-visible { max-height: 2000px; opacity: 1; transition: max-height 0.5s ease-in, opacity 0.4s; }
-        
-        /* 自定義按鈕 */
-        .btn-qty { width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; border: 1px solid #E5E7EB; }
+        /* Loading 動畫 */
+        .loader {
+            width: 48px;
+            height: 48px;
+            border: 5px solid #DDC9B4;
+            border-bottom-color: #2A3D45;
+            border-radius: 50%;
+            display: inline-block;
+            box-sizing: border-box;
+            animation: rotation 1s linear infinite;
+        }
+        @keyframes rotation {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
     </style>
 </head>
-<body class="pb-24">
+<body class="text-brand-dark antialiased font-sans flex justify-center">
 
-    <!-- 導覽列 -->
-    <nav class="sticky top-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100 h-16 md:h-20">
-        <div class="max-w-6xl mx-auto px-6 h-full flex items-center justify-between relative">
-            <div id="siteName" class="text-xs font-bold tracking-[0.2em] text-primary uppercase">豪豪出包</div>
-            <div class="absolute left-1/2 -translate-x-1/2">
-                <img id="siteLogo" src="" alt="Logo" class="h-8 md:h-10 w-auto hidden">
-            </div>
-            <button onclick="app.navigate('checkout')" class="relative p-2">
-                <i class="fa-solid fa-cart-shopping text-lg text-primary"></i>
-                <span id="cartBadge" class="absolute -top-1 -right-1 bg-accent1 text-white text-[9px] w-4 h-4 flex items-center justify-center hidden font-bold">0</span>
-            </button>
-        </div>
-    </nav>
-
-    <main id="app">
-        <!-- 載入中視圖 -->
-        <div id="loadingView" class="min-h-[60vh] flex flex-col items-center justify-center text-graytext">
-            <div class="loader mb-4"></div>
-            <p class="text-[10px] tracking-[0.3em] uppercase">Loading Sourdough</p>
+    <!-- 手機版框架 -->
+    <div class="w-full max-w-md min-h-screen bg-brand-bg relative shadow-2xl overflow-hidden flex flex-col" x-data="shopApp()">
+        
+        <!-- ====== 載入中畫面 ====== -->
+        <div x-show="isLoading" 
+             x-transition.opacity.duration.500ms
+             class="absolute inset-0 z-50 bg-brand-bg flex flex-col items-center justify-center space-y-4" x-cloak>
+             <span class="loader"></span>
+             <p class="text-brand-highlight1 font-bold tracking-widest animate-pulse">載入最新商品中...</p>
         </div>
 
-        <!-- 首頁視圖 -->
-        <div id="homeView" class="hidden fade-in">
-            <img id="heroImg" src="" alt="Hero" class="w-full h-[40vh] md:h-[70vh] object-cover">
-            
-            <!-- 訂購說明 -->
-            <section class="max-w-3xl mx-auto px-6 py-12 md:py-20">
-                <div id="orderInstructions" class="text-sm md:text-base leading-relaxed text-secondary whitespace-pre-line border-l-2 border-sand pl-6 md:pl-8"></div>
-            </section>
+        <!-- ====== 錯誤畫面 (若讀取失敗) ====== -->
+        <div x-show="!isLoading && isError" 
+             class="absolute inset-0 z-50 bg-brand-bg flex flex-col items-center justify-center p-6 text-center space-y-4" x-cloak>
+             <i data-lucide="alert-triangle" class="w-16 h-16 text-brand-highlight2"></i>
+             <h2 class="text-xl font-bold">哎呀！讀取資料失敗</h2>
+             <p class="text-brand-grayDark text-sm">請檢查您的網路連線，或重新整理頁面試試看。</p>
+             <button @click="fetchStoreData()" class="mt-4 bg-brand-highlight1 text-white px-6 py-2 rounded-xl">重試</button>
+        </div>
 
-            <!-- 產品列表 (摺疊式介面) -->
-            <section id="productsContainer" class="max-w-4xl mx-auto px-6 space-y-4 mb-24">
-                <!-- 產品項目將由 JS 動態生成 -->
-            </section>
-
-            <!-- 品牌故事 (移除標題字樣) -->
-            <section class="bg-bglight py-20 px-6">
-                <div class="max-w-2xl mx-auto">
-                    <div class="mb-12">
-                        <h2 id="brandDescription" class="text-xl md:text-2xl font-light leading-snug text-primary whitespace-pre-line"></h2>
+        <!-- ====== 主要內容 (資料載入完成後顯示) ====== -->
+        <template x-if="!isLoading && !isError">
+            <div class="flex flex-col h-full w-full">
+                
+                <!-- Navbar -->
+                <header class="bg-brand-bg/90 backdrop-blur-md sticky top-0 z-40 border-b border-brand-primaryDark/20">
+                    <div class="flex items-center justify-between px-6 py-4">
+                        <div class="cursor-pointer font-bold text-xl tracking-widest text-brand-dark flex items-center gap-2" @click="changeView('home')">
+                            <!-- 如果後台有設定 Logo 圖片，則顯示圖片，否則顯示純文字 -->
+                            <template x-if="settings.logo_image_url">
+                                <img :src="settings.logo_image_url" class="h-8 w-auto object-contain" alt="Logo">
+                            </template>
+                            <span x-show="!settings.logo_image_url" x-text="settings.site_name || '豪豪出包'"></span>
+                        </div>
+                        
+                        <button 
+                            x-show="['home', 'shop', 'cart'].includes(currentView)"
+                            @click="changeView('cart')" 
+                            class="relative p-2 text-brand-highlight1 hover:text-brand-highlight2 transition-colors">
+                            <i data-lucide="shopping-bag"></i>
+                            <span 
+                                x-show="cartTotalItems > 0" 
+                                x-text="cartTotalItems"
+                                class="absolute top-0 right-0 bg-brand-highlight2 text-white text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center">
+                            </span>
+                        </button>
                     </div>
-                    <div class="w-12 h-[1px] bg-sand mb-12"></div>
-                    <div>
-                        <div id="brandStatement" class="text-sm md:text-base leading-loose text-secondary whitespace-pre-line"></div>
-                    </div>
-                </div>
-            </section>
-        </div>
+                </header>
 
-        <!-- 結帳視圖 (還原版本：更清楚的區塊呈現) -->
-        <div id="checkoutView" class="hidden fade-in max-w-2xl mx-auto px-6 py-12">
-            <h2 class="text-xl font-bold tracking-widest mb-8 text-primary border-b border-gray-100 pb-4">確認訂購內容</h2>
-            
-            <div id="cartItems" class="space-y-1 mb-8"></div>
-            
-            <div class="bg-bglight p-6 space-y-3 mb-12">
-                <div class="flex justify-between text-sm text-graytext">
-                    <span>商品小計</span>
-                    <span id="subtotalPrice">NT$ 0</span>
-                </div>
-                <div class="flex justify-between text-sm text-graytext">
-                    <span>7-11 運費</span>
-                    <span>NT$ 60</span>
-                </div>
-                <div class="flex justify-between text-lg font-bold text-primary pt-3 border-t border-gray-200">
-                    <span>總計金額</span>
-                    <span id="totalPrice" class="text-accent1 font-bold">NT$ 0</span>
-                </div>
-            </div>
+                <main class="flex-1 overflow-y-auto no-scrollbar pb-24 relative">
+                    
+                    <!-- ====== 視圖 1: 首頁 (Home) ====== -->
+                    <div x-show="currentView === 'home'" 
+                         x-transition:enter="transition ease-out duration-500"
+                         x-transition:enter-start="opacity-0 translate-y-4"
+                         x-transition:enter-end="opacity-100 translate-y-0"
+                         class="space-y-8 pb-6" x-cloak>
+                        
+                        <!-- 動態主視覺大圖 -->
+                        <div class="w-full aspect-[4/3] bg-brand-primary/20 relative">
+                            <img :src="settings.main_image_url || 'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?auto=format&fit=crop&q=80&w=800'" 
+                                 class="w-full h-full object-cover" 
+                                 alt="主視覺">
+                        </div>
 
-            <h3 class="text-lg font-bold mb-6 text-primary">訂購人資訊</h3>
-            <form onsubmit="event.preventDefault(); app.submitOrder();" class="space-y-6">
-                <div>
-                    <label class="block text-xs font-bold text-graytext mb-2 uppercase tracking-widest">中文姓名 *</label>
-                    <input type="text" id="name" required class="w-full border border-gray-200 px-4 py-3 outline-none focus:border-sand bg-white">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-graytext mb-2 uppercase tracking-widest">Instagram 帳號 *</label>
-                    <input type="text" id="ig" required class="w-full border border-gray-200 px-4 py-3 outline-none focus:border-sand bg-white" placeholder="@your_account">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-graytext mb-2 uppercase tracking-widest">聯絡手機 *</label>
-                    <input type="tel" id="phone" required pattern="09\d{8}" class="w-full border border-gray-200 px-4 py-3 outline-none focus:border-sand bg-white" placeholder="09xxxxxxxx">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-graytext mb-2 uppercase tracking-widest">Email *</label>
-                    <input type="email" id="email" required class="w-full border border-gray-200 px-4 py-3 outline-none focus:border-sand bg-white">
-                </div>
-                <div>
-                    <label class="block text-xs font-bold text-graytext mb-2 uppercase tracking-widest">7-11 門市名稱與店號 *</label>
-                    <input type="text" id="store" required class="w-full border border-gray-200 px-4 py-3 outline-none focus:border-sand bg-white" placeholder="門市名稱 (店號)">
-                </div>
-                <div class="pt-8 flex flex-col md:flex-row gap-4">
-                    <button type="submit" id="submitBtn" class="w-full bg-primary text-white py-5 font-bold tracking-widest hover:bg-secondary">確認並送出訂單</button>
-                    <button type="button" onclick="app.navigate('home')" class="w-full py-5 text-sm text-graytext border border-gray-100 uppercase tracking-widest">返回修改</button>
-                </div>
-            </form>
-        </div>
+                        <div class="px-6 space-y-10">
+                            <!-- 品牌視覺文字 -->
+                            <div class="text-center space-y-4">
+                                <h1 class="text-2xl font-bold tracking-widest text-brand-highlight1" style="white-space: pre-line" x-text="settings.brand_description"></h1>
+                            </div>
 
-        <!-- 成功視圖 (還原版本：明確的匯款資訊區塊) -->
-        <div id="successView" class="hidden fade-in max-w-xl mx-auto px-6 py-20 text-center">
-            <div class="w-20 h-20 bg-accent3/30 rounded-full flex items-center justify-center mx-auto mb-8">
-                <i class="fa-solid fa-check text-3xl text-accent1"></i>
-            </div>
-            <h2 class="text-2xl font-bold mb-2">訂單已成功送出</h2>
-            <p id="orderIdDisplay" class="text-xs text-graytext mb-12 tracking-widest"></p>
-            
-            <div class="bg-white border border-gray-100 p-8 text-left space-y-6 shadow-sm">
-                <h3 class="font-bold text-primary border-b border-gray-100 pb-4">匯款資訊</h3>
-                <div class="space-y-4">
-                    <div>
-                        <p class="text-[10px] font-bold text-graytext tracking-widest uppercase mb-1">銀行帳號</p>
-                        <div class="flex justify-between items-center bg-bglight px-4 py-3">
-                            <span id="bankAccount" class="text-base font-medium text-primary"></span>
-                            <button onclick="app.copyText('bankAccount')" class="text-sand p-2"><i class="fa-regular fa-copy"></i></button>
+                            <!-- 品牌理念 -->
+                            <div class="bg-white p-6 rounded-2xl shadow-sm border border-brand-primary/30 relative">
+                                <div class="absolute -top-3 left-6 bg-brand-primary px-3 py-1 rounded-full text-xs font-bold text-brand-highlight1">品牌理念</div>
+                                <p class="text-sm leading-relaxed text-brand-grayDark mt-2" style="white-space: pre-line" x-text="settings.brand_statement"></p>
+                            </div>
+
+                            <!-- 訂購須知 -->
+                            <div class="space-y-3">
+                                <h2 class="text-lg font-bold border-l-4 border-brand-highlight2 pl-3">訂購須知</h2>
+                                <div class="bg-brand-primary/10 p-5 rounded-2xl text-sm leading-relaxed text-brand-grayDark" style="white-space: pre-line" x-text="settings.order_instructions"></div>
+                            </div>
+
+                            <!-- CTA 按鈕 -->
+                            <button @click="changeView('shop')" class="w-full bg-brand-highlight1 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-opacity-90 transition-all active:scale-95 flex justify-center items-center gap-2">
+                                開始選購 <i data-lucide="arrow-right" class="w-5 h-5"></i>
+                            </button>
                         </div>
                     </div>
-                    <div>
-                        <p class="text-[10px] font-bold text-graytext tracking-widest uppercase mb-1">應付總額</p>
-                        <p id="successTotal" class="text-2xl font-bold text-accent1"></p>
+
+
+                    <!-- ====== 視圖 2: 商品頁 (Shop) ====== -->
+                    <div x-show="currentView === 'shop'" 
+                         x-transition:enter="transition ease-out duration-500"
+                         x-transition:enter-start="opacity-0 translate-y-4"
+                         x-transition:enter-end="opacity-100 translate-y-0"
+                         class="p-6 space-y-8" x-cloak>
+                        
+                        <h2 class="text-2xl font-bold mb-6">產品選購</h2>
+
+                        <!-- 檢查是否有商品 -->
+                        <div x-show="products.length === 0" class="text-center py-10 text-brand-grayLight">
+                            <p>目前還沒有商品上架喔！</p>
+                        </div>
+
+                        <template x-for="product in products" :key="product.id">
+                            <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-brand-primary/30 flex flex-col">
+                                <!-- 動態商品圖片 -->
+                                <div class="h-48 bg-brand-primary/20 w-full relative">
+                                    <img :src="product.main_image_url || 'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?auto=format&fit=crop&q=80&w=600'" 
+                                         class="w-full h-full object-cover">
+                                    <div x-show="product.max_quantity <= 0" class="absolute inset-0 bg-black/50 flex items-center justify-center backdrop-blur-sm">
+                                        <span class="text-white font-bold tracking-widest border-2 border-white px-4 py-2 rounded-lg">已售完</span>
+                                    </div>
+                                </div>
+                                
+                                <div class="p-5 space-y-4">
+                                    <div class="flex justify-between items-start">
+                                        <div>
+                                            <h3 class="text-lg font-bold" x-text="product.name"></h3>
+                                            <p class="text-xs text-brand-grayLight mt-1" x-text="`重量: ${product.weight_grams}g`"></p>
+                                        </div>
+                                        <div class="text-brand-highlight2 font-bold text-lg" x-text="`NT$ ${product.price}`"></div>
+                                    </div>
+                                    
+                                    <p class="text-sm text-brand-grayDark leading-relaxed" style="white-space: pre-line" x-text="product.description"></p>
+                                    
+                                    <div class="text-xs text-brand-grayLight bg-brand-bg p-3 rounded-lg">
+                                        <span class="font-bold">成分：</span><span x-text="product.ingredients"></span>
+                                    </div>
+
+                                    <!-- 加入購物車控制 -->
+                                    <div class="pt-4 border-t border-brand-bg flex items-center justify-between" x-show="product.max_quantity > 0">
+                                        <div class="text-sm text-brand-accent">
+                                            <span x-text="`每人限購 ${product.max_quantity} 份`"></span>
+                                        </div>
+                                        
+                                        <div class="flex items-center gap-3 bg-brand-bg rounded-lg p-1">
+                                            <button @click="removeFromCart(product)" class="w-8 h-8 flex items-center justify-center text-brand-highlight1 bg-white rounded-md shadow-sm active:scale-95 disabled:opacity-50" :disabled="getCartQuantity(product.id) === 0">
+                                                <i data-lucide="minus" class="w-4 h-4"></i>
+                                            </button>
+                                            <span class="w-4 text-center font-bold" x-text="getCartQuantity(product.id)"></span>
+                                            <button @click="addToCart(product)" class="w-8 h-8 flex items-center justify-center text-white bg-brand-highlight1 rounded-md shadow-sm active:scale-95 disabled:opacity-50" :disabled="getCartQuantity(product.id) >= product.max_quantity">
+                                                <i data-lucide="plus" class="w-4 h-4"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </template>
                     </div>
-                    <div>
-                        <p class="text-[10px] font-bold text-graytext tracking-widest uppercase mb-1">匯款提醒</p>
-                        <p id="bankReminder" class="text-sm text-secondary leading-loose whitespace-pre-line"></p>
+
+                    <!-- ====== 視圖 3: 購物車 (Cart) ====== -->
+                    <div x-show="currentView === 'cart'" class="p-6 space-y-6" x-cloak>
+                        <!-- (同前一版邏輯，省略部分重複內容以保持簡潔，直接延續) -->
+                        <div class="flex items-center gap-3 mb-6">
+                            <button @click="changeView('shop')" class="text-brand-grayLight hover:text-brand-dark"><i data-lucide="arrow-left"></i></button>
+                            <h2 class="text-2xl font-bold">購物車</h2>
+                        </div>
+
+                        <template x-if="cart.length === 0">
+                            <div class="text-center py-20 text-brand-grayLight space-y-4">
+                                <i data-lucide="shopping-cart" class="w-16 h-16 mx-auto opacity-50"></i>
+                                <p>購物車是空的喔！</p>
+                                <button @click="changeView('shop')" class="px-6 py-2 bg-brand-primary text-brand-dark rounded-full text-sm font-bold">去逛逛</button>
+                            </div>
+                        </template>
+
+                        <template x-if="cart.length > 0">
+                            <div class="space-y-6">
+                                <div class="space-y-4">
+                                    <template x-for="item in cart" :key="item.id">
+                                        <div class="bg-white p-4 rounded-xl flex items-center justify-between shadow-sm border border-brand-primary/20">
+                                            <div class="flex-1">
+                                                <h4 class="font-bold text-sm" x-text="item.name"></h4>
+                                                <div class="text-brand-highlight2 text-sm mt-1" x-text="`NT$ ${item.price}`"></div>
+                                            </div>
+                                            <div class="flex items-center gap-3 bg-brand-bg rounded-lg p-1">
+                                                <button @click="removeFromCart(item)" class="w-7 h-7 flex items-center justify-center text-brand-highlight1 bg-white rounded-md shadow-sm active:scale-95">
+                                                    <i data-lucide="minus" class="w-4 h-4"></i>
+                                                </button>
+                                                <span class="w-4 text-center font-bold text-sm" x-text="item.quantity"></span>
+                                                <button @click="addToCart(item)" class="w-7 h-7 flex items-center justify-center text-white bg-brand-highlight1 rounded-md shadow-sm active:scale-95 disabled:opacity-50" :disabled="item.quantity >= item.max_quantity">
+                                                    <i data-lucide="plus" class="w-4 h-4"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </template>
+                                </div>
+                                <div class="bg-brand-primaryDark/10 p-5 rounded-xl space-y-3 text-sm">
+                                    <div class="flex justify-between">
+                                        <span class="text-brand-grayDark">商品小計</span>
+                                        <span class="font-bold" x-text="`NT$ ${cartSubtotal}`"></span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-brand-grayDark" x-text="`運費 (${settings.shipping_method || '常溫交貨便'})`"></span>
+                                        <span class="font-bold" x-text="`NT$ ${settings.shipping_fee || 0}`"></span>
+                                    </div>
+                                    <div class="border-t border-brand-primary/30 pt-3 flex justify-between items-center mt-2">
+                                        <span class="font-bold text-base">總計</span>
+                                        <span class="font-bold text-xl text-brand-highlight2" x-text="`NT$ ${cartSubtotal + parseInt(settings.shipping_fee || 0)}`"></span>
+                                    </div>
+                                </div>
+                                <button @click="changeView('checkout')" class="w-full bg-brand-highlight1 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-opacity-90 transition-all active:scale-95">
+                                    下一步：填寫資料
+                                </button>
+                            </div>
+                        </template>
                     </div>
+
+                    <!-- ====== 視圖 4: 結帳表單 (Checkout) ====== -->
+                    <div x-show="currentView === 'checkout'" class="p-6 space-y-6" x-cloak>
+                        <div class="flex items-center gap-3 mb-4">
+                            <button @click="changeView('cart')" class="text-brand-grayLight hover:text-brand-dark"><i data-lucide="arrow-left"></i></button>
+                            <h2 class="text-2xl font-bold">寄送資料</h2>
+                        </div>
+                        <form @submit.prevent="submitOrder" class="space-y-5">
+                            <div>
+                                <label class="block text-sm font-bold mb-2">真實姓名 (中文)</label>
+                                <input type="text" x-model="formData.name" required class="w-full bg-white border border-brand-primaryDark/30 rounded-xl px-4 py-3 focus:outline-none focus:border-brand-highlight1">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold mb-2">手機號碼</label>
+                                <input type="tel" x-model="formData.phone" required pattern="09\d{8}" class="w-full bg-white border border-brand-primaryDark/30 rounded-xl px-4 py-3 focus:outline-none focus:border-brand-highlight1">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold mb-2">Instagram 帳號 <span class="text-brand-grayLight font-normal text-xs">(選填)</span></label>
+                                <input type="text" x-model="formData.ig" class="w-full bg-white border border-brand-primaryDark/30 rounded-xl px-4 py-3 focus:outline-none focus:border-brand-highlight1">
+                            </div>
+                            <div class="pt-4 border-t border-brand-primaryDark/20">
+                                <label class="block text-sm font-bold mb-2">7-11 取件門市名稱</label>
+                                <input type="text" x-model="formData.cvs_store_name" required class="w-full bg-white border border-brand-primaryDark/30 rounded-xl px-4 py-3 focus:outline-none focus:border-brand-highlight1">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-bold mb-2">7-11 店號 <span class="text-brand-grayLight font-normal text-xs">(6碼數字)</span></label>
+                                <input type="text" x-model="formData.cvs_store_number" required pattern="\d{6}" class="w-full bg-white border border-brand-primaryDark/30 rounded-xl px-4 py-3 focus:outline-none focus:border-brand-highlight1">
+                            </div>
+                            <div class="pt-6">
+                                <button type="submit" class="w-full bg-brand-highlight1 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-opacity-90 transition-all active:scale-95 flex justify-center items-center gap-2 disabled:opacity-70" :disabled="isSubmitting">
+                                    <span x-show="!isSubmitting">確認送出訂單</span>
+                                    <span x-show="isSubmitting" class="flex items-center gap-2">
+                                        <i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> 處理中...
+                                    </span>
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- ====== 視圖 5: 成功頁面 (Success) ====== -->
+                    <div x-show="currentView === 'success'" class="p-6 space-y-8 text-center mt-10" x-cloak>
+                        <div class="w-20 h-20 mx-auto bg-green-100 text-green-600 rounded-full flex items-center justify-center shadow-inner mb-6">
+                            <i data-lucide="check" class="w-10 h-10"></i>
+                        </div>
+                        <h2 class="text-2xl font-bold">訂購成功！</h2>
+                        <p class="text-brand-grayDark text-sm">感謝您的訂購。您的訂單已保留。</p>
+                        <p class="text-xs text-brand-highlight2 font-bold" x-text="`訂單編號: #${orderId}`"></p>
+                        
+                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-brand-primary/30 text-left space-y-4 mt-8">
+                            <h3 class="font-bold border-b border-brand-bg pb-2">匯款資訊</h3>
+                            <div>
+                                <p class="text-xs text-brand-grayLight mb-1">匯款帳號</p>
+                                <div class="flex items-center justify-between bg-brand-bg p-3 rounded-lg">
+                                    <span class="font-bold font-mono tracking-wider" x-text="settings.bank_account"></span>
+                                    <button @click="copyText(settings.bank_account)" class="text-brand-highlight1 text-sm bg-white px-2 py-1 rounded shadow-sm">複製</button>
+                                </div>
+                            </div>
+                            <div>
+                                <p class="text-xs text-brand-grayLight mb-1">應付總額</p>
+                                <p class="font-bold text-xl text-brand-highlight2" x-text="`NT$ ${finalTotal}`"></p>
+                            </div>
+                            <div class="text-xs text-brand-grayDark leading-relaxed pt-2" style="white-space: pre-line" x-text="settings.bank_reminder"></div>
+                        </div>
+                        <div class="pt-8">
+                            <button @click="resetApp()" class="text-brand-grayDark text-sm underline hover:text-brand-highlight1">返回首頁</button>
+                        </div>
+                    </div>
+                </main>
+
+                <!-- 浮動購物車提示 -->
+                <div x-show="currentView === 'shop' && cartTotalItems > 0"
+                     class="absolute bottom-0 left-0 right-0 p-4 bg-white border-t border-brand-primary/30 shadow-[0_-10px_20px_-10px_rgba(0,0,0,0.1)] z-50 flex items-center justify-between" x-cloak>
+                     <div>
+                         <p class="text-xs text-brand-grayLight mb-0.5">購物車共 <span x-text="cartTotalItems"></span> 件</p>
+                         <p class="font-bold text-brand-highlight2" x-text="`NT$ ${cartSubtotal}`"></p>
+                     </div>
+                     <button @click="changeView('cart')" class="bg-brand-highlight1 text-white px-6 py-2.5 rounded-full font-bold text-sm shadow-md active:scale-95">
+                         結帳去
+                     </button>
                 </div>
             </div>
-            <button onclick="window.location.reload()" class="mt-16 text-xs underline text-graytext uppercase tracking-widest">回到首頁</button>
-        </div>
-    </main>
-
-    <!-- Footer (顏色加深優化) -->
-    <footer class="py-16 px-6 border-t border-gray-100">
-        <div class="max-w-4xl mx-auto text-center">
-            <p id="footerContent" class="text-xs text-secondary leading-loose whitespace-pre-line mb-6 font-medium"></p>
-            <p class="text-[9px] text-graytext tracking-[0.3em] uppercase opacity-70">&copy; 2026 HaoHao ChuBao Studio</p>
-        </div>
-    </footer>
-
-    <!-- 手機結帳導覽列 (還原呈現) -->
-    <div id="mobileBar" class="fixed bottom-0 left-0 w-full bg-primary text-white p-5 flex justify-between items-center md:hidden z-40 hidden" onclick="app.navigate('checkout')">
-        <div class="flex flex-col">
-            <span class="text-[10px] text-white/70 font-bold tracking-widest">點此結帳</span>
-            <span id="barTotal" class="font-bold text-lg"></span>
-        </div>
-        <div class="flex items-center gap-2">
-            <span class="text-xs font-bold tracking-widest">NEXT</span>
-            <i class="fa-solid fa-chevron-right text-xs"></i>
-        </div>
+        </template>
     </div>
 
     <script>
-        /** * ⚠️ 重要：請在此貼上你的 GAS URL */
-        const GAS_URL = "https://script.google.com/macros/s/AKfycbw8pc2DUZNLCNA4jBVPsCBvFtBmikvb_FWfFPygl_OUbfS4EXPoZhR7hW2PpNb1KlQSyA/exec";
+        // 【重要】請將下方替換為您完成步驟二後取得的 Google Apps Script 網址
+        const GOOGLE_APP_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxbKkjvmtU-lCU5kbbn6ERLF9PUKiaIfin2jssMx6Erh3jSxfUy363pP7rWvHNCy4xnhA/exec';
 
-        const app = {
-            state: { products: [], settings: {}, cart: {}, expandedId: null },
-            async init() {
-                try {
-                    const res = await fetch(GAS_URL + "?action=getData").then(r => r.json());
-                    this.state.products = res.data.products;
-                    this.state.settings = res.data.settings;
-                    this.renderSettings();
-                    this.renderProducts();
-                    this.navigate('home');
-                } catch (e) { 
-                    console.error("Load failed");
-                    // 開發期間若沒填 GAS URL 可在此載入測試資料 (可視需求移除)
-                }
-            },
-            navigate(page) {
-                document.querySelectorAll('#app > div').forEach(d => d.classList.add('hidden'));
-                document.getElementById(page + 'View').classList.remove('hidden');
-                window.scrollTo(0,0);
-                this.updateUI();
-            },
-            renderSettings() {
-                const s = this.state.settings;
-                document.getElementById('siteName').innerText = s.site_name;
-                if(s.logo_url) { const l = document.getElementById('siteLogo'); l.src = s.logo_url; l.classList.remove('hidden'); }
-                document.getElementById('heroImg').src = s.hero_image_url;
-                document.getElementById('orderInstructions').innerText = s.order_instructions;
-                document.getElementById('brandDescription').innerText = s.brand_description;
-                document.getElementById('brandStatement').innerText = s.brand_statement;
-                document.getElementById('footerContent').innerText = s.footer_content;
-                document.getElementById('bankAccount').innerText = s.bank_account;
-                document.getElementById('bankReminder').innerText = s.bank_reminder;
-            },
-            toggleProduct(id) {
-                // 如果點擊的是同一個，則關閉；否則開啟新的
-                this.state.expandedId = (this.state.expandedId === id) ? null : id;
-                this.renderProducts();
-            },
-            renderProducts() {
-                const container = document.getElementById('productsContainer');
-                container.innerHTML = '';
+        document.addEventListener('alpine:init', () => {
+            Alpine.data('shopApp', () => ({
+                isLoading: true,
+                isError: false,
+                currentView: 'home',
+                isSubmitting: false,
+                orderId: '',
+                finalTotal: 0,
                 
-                this.state.products.filter(p => String(p.is_visible).toUpperCase() === 'TRUE').forEach(p => {
-                    const isExpanded = this.state.expandedId === p.id;
-                    const qty = this.state.cart[p.id] || 0;
+                settings: {},
+                products: [],
+                cart: [],
+                formData: { name: '', phone: '', ig: '', cvs_store_name: '', cvs_store_number: '' },
+
+                init() {
+                    this.fetchStoreData();
                     
-                    const html = `
-                        <div class="border border-gray-100 bg-white transition-all duration-300 ${isExpanded ? 'shadow-lg' : ''}">
-                            <!-- Header / Summary (點擊摺疊展開) -->
-                            <div class="flex items-center p-4 cursor-pointer" onclick="app.toggleProduct(${p.id})">
-                                <div class="w-20 h-20 flex-shrink-0 bg-bglight overflow-hidden">
-                                    <img src="${p.main_image_url}" class="w-full h-full object-cover">
-                                </div>
-                                <div class="flex-1 ml-4 pr-4">
-                                    <h3 class="text-lg font-bold text-primary">${p.name}</h3>
-                                    <p class="text-xs font-bold text-sand tracking-widest uppercase">
-                                        ${p.weight_grams}g <span class="mx-1 opacity-30">|</span> NT$ ${p.price}
-                                    </p>
-                                </div>
-                                <div class="text-gray-300 transform transition-transform duration-300 ${isExpanded ? 'rotate-180' : ''}">
-                                    <i class="fa-solid fa-chevron-down"></i>
-                                </div>
-                            </div>
-
-                            <!-- 詳細內容 (摺疊區塊) -->
-                            <div class="${isExpanded ? 'content-visible p-4 pt-0 border-t border-gray-50' : 'content-hidden px-4'}">
-                                <div class="py-6">
-                                    <div class="text-base leading-relaxed text-secondary font-light whitespace-pre-line mb-8">
-                                        ${p.description}
-                                    </div>
-                                    <div class="mb-10">
-                                        <p class="text-[10px] font-bold text-gray-300 uppercase tracking-widest mb-2">Ingredients</p>
-                                        <p class="text-xs text-graytext leading-relaxed">${p.ingredients}</p>
-                                    </div>
-                                    
-                                    <!-- 數量選擇器 (始終可見於摺疊區) -->
-                                    <div class="flex items-center justify-between bg-bglight p-4">
-                                        <div class="flex items-center bg-white border border-gray-200">
-                                            <button onclick="event.stopPropagation(); app.qty(${p.id},-1)" class="btn-qty text-graytext"><i class="fa-solid fa-minus"></i></button>
-                                            <span id="qty-${p.id}" class="w-12 text-center font-bold text-lg">${qty}</span>
-                                            <button onclick="event.stopPropagation(); app.qty(${p.id},1)" class="btn-qty text-graytext"><i class="fa-solid fa-plus"></i></button>
-                                        </div>
-                                        <span class="text-[10px] font-bold text-accent1 tracking-widest">每人限購 ${p.max_quantity} 包</span>
-                                    </div>
-                                </div>
-                            </div>
-                        </div>
-                    `;
-                    container.insertAdjacentHTML('beforeend', html);
-                });
-            },
-            qty(id, delta) {
-                const p = this.state.products.find(x => x.id == id);
-                let current = this.state.cart[id] || 0;
-                let next = current + delta;
-                if(next >= 0 && next <= p.max_quantity) {
-                    this.state.cart[id] = next;
-                    this.renderProducts(); // 重新渲染以更新各處數量
-                    this.updateUI();
-                }
-            },
-            updateUI() {
-                let total = 0, count = 0;
-                this.state.products.forEach(p => {
-                    const q = this.state.cart[p.id] || 0;
-                    total += q * p.price; count += q;
-                });
-                
-                // 更新購物車徽章
-                const badge = document.getElementById('cartBadge');
-                badge.innerText = count;
-                badge.classList.toggle('hidden', count === 0);
-                
-                // 更新手機浮動條 (僅首頁顯示)
-                const isHome = !document.getElementById('homeView').classList.contains('hidden');
-                document.getElementById('mobileBar').classList.toggle('hidden', count === 0 || !isHome);
-                document.getElementById('barTotal').innerText = 'NT$ ' + (total + 60);
-                
-                // 更新結帳頁資訊
-                const list = document.getElementById('cartItems');
-                if(list) {
-                    list.innerHTML = '';
-                    this.state.products.forEach(p => {
-                        const q = this.state.cart[p.id] || 0;
-                        if(q > 0) {
-                            list.insertAdjacentHTML('beforeend', `
-                                <div class="flex justify-between items-center py-3 border-b border-gray-50 last:border-0">
-                                    <div class="flex flex-col">
-                                        <span class="font-bold text-primary">${p.name}</span>
-                                        <span class="text-xs text-graytext">NT$ ${p.price} x ${q}</span>
-                                    </div>
-                                    <span class="font-bold text-secondary">NT$ ${p.price * q}</span>
-                                </div>
-                            `);
-                        }
+                    this.$watch('currentView', () => {
+                        window.scrollTo(0, 0);
+                        setTimeout(() => lucide.createIcons(), 50);
                     });
+                },
+
+                // ==== 1. 向 Google Sheet 抓取設定與產品資料 ====
+                async fetchStoreData() {
+                    this.isLoading = true;
+                    this.isError = false;
+                    
+                    if(GOOGLE_APP_SCRIPT_URL === 'YOUR_GOOGLE_APP_SCRIPT_URL_HERE') {
+                        // 如果還沒填入真實網址，給點假資料方便預覽設計
+                        setTimeout(() => {
+                            this.settings = { site_name: "豪豪出包 (預覽測試)", order_instructions: "請先綁定 Google Sheet API" };
+                            this.products = [];
+                            this.isLoading = false;
+                            setTimeout(() => lucide.createIcons(), 50);
+                        }, 1000);
+                        return;
+                    }
+
+                    try {
+                        // 使用 GET 方法呼叫 API
+                        const response = await fetch(GOOGLE_APP_SCRIPT_URL);
+                        const result = await response.json();
+                        
+                        if(result.status === 'success') {
+                            this.settings = result.data.settings;
+                            
+                            // 過濾掉隱藏的商品並依照 sort_order 排序
+                            let rawProducts = result.data.products;
+                            this.products = rawProducts
+                                .filter(p => p.is_visible === true || p.is_visible === 'TRUE')
+                                .sort((a, b) => (a.sort_order || 99) - (b.sort_order || 99));
+                            
+                            this.isLoading = false;
+                            setTimeout(() => lucide.createIcons(), 50);
+                        } else {
+                            throw new Error('Data format error');
+                        }
+                    } catch (error) {
+                        console.error('Fetch error:', error);
+                        this.isError = true;
+                        this.isLoading = false;
+                    }
+                },
+
+                // ==== 2. 將訂單送回 Google Sheet ====
+                async submitOrder() {
+                    if (this.cart.length === 0) return;
+                    this.isSubmitting = true;
+
+                    const shippingFee = parseInt(this.settings.shipping_fee || 0);
+
+                    const orderPayload = {
+                        created_at: new Date().toISOString(),
+                        customer_name: this.formData.name,
+                        ig_account: this.formData.ig,
+                        phone: this.formData.phone,
+                        cvs_store_name: this.formData.cvs_store_name,
+                        cvs_store_number: this.formData.cvs_store_number,
+                        items: JSON.stringify(this.cart.map(item => `${item.name}x${item.quantity}`).join(', ')),
+                        subtotal: this.cartSubtotal,
+                        shipping_fee: shippingFee,
+                        total_price: this.cartSubtotal + shippingFee,
+                        status: "new"
+                    };
+
+                    try {
+                        const response = await fetch(GOOGLE_APP_SCRIPT_URL, {
+                            method: 'POST',
+                            mode: 'no-cors', // 重要：避免跨網域寫入被阻擋
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify(orderPayload)
+                        });
+                        
+                        // 產生前端顯示用的訂單編號
+                        this.orderId = 'ORD' + Math.floor(1000 + Math.random() * 9000);
+                        this.finalTotal = this.cartSubtotal + shippingFee;
+                        
+                        setTimeout(() => {
+                            this.isSubmitting = false;
+                            this.changeView('success');
+                        }, 800);
+
+                    } catch (error) {
+                        alert('送出失敗，請檢查網路連線。');
+                        this.isSubmitting = false;
+                    }
+                },
+
+                // (保留原有的購物車邏輯)
+                changeView(view) { this.currentView = view; },
+                getCartQuantity(productId) { const i = this.cart.find(i => i.id === productId); return i ? i.quantity : 0; },
+                addToCart(product) {
+                    const existingItem = this.cart.find(i => i.id === product.id);
+                    if (existingItem) { if (existingItem.quantity < product.max_quantity) existingItem.quantity++; } 
+                    else { this.cart.push({ ...product, quantity: 1 }); }
+                },
+                removeFromCart(product) {
+                    const index = this.cart.findIndex(i => i.id === product.id);
+                    if (index !== -1) { if (this.cart[index].quantity > 1) this.cart[index].quantity--; else this.cart.splice(index, 1); }
+                },
+                get cartTotalItems() { return this.cart.reduce((total, item) => total + item.quantity, 0); },
+                get cartSubtotal() { return this.cart.reduce((total, item) => total + (parseInt(item.price) * item.quantity), 0); },
+                copyText(text) {
+                    const tempInput = document.createElement("input");
+                    tempInput.value = text;
+                    document.body.appendChild(tempInput); tempInput.select(); document.execCommand("copy"); document.body.removeChild(tempInput);
+                    alert('已複製帳號！');
+                },
+                resetApp() {
+                    this.cart = [];
+                    this.formData = { name: '', phone: '', ig: '', cvs_store_name: '', cvs_store_number: '' };
+                    this.changeView('home');
                 }
-                const subtotalEl = document.getElementById('subtotalPrice');
-                const totalEl = document.getElementById('totalPrice');
-                if(subtotalEl) subtotalEl.innerText = 'NT$ ' + total;
-                if(totalEl) totalEl.innerText = 'NT$ ' + (total + 60);
-                
-                const successTotalEl = document.getElementById('successTotal');
-                if(successTotalEl) successTotalEl.innerText = 'NT$ ' + (total + 60);
-            },
-            async submitOrder() {
-                const btn = document.getElementById('submitBtn');
-                btn.disabled = true; btn.innerText = "訂單傳送中...";
-                
-                const orderData = {
-                    customer_name: document.getElementById('name').value,
-                    ig_account: document.getElementById('ig').value,
-                    phone: document.getElementById('phone').value,
-                    email: document.getElementById('email').value,
-                    cvs_store_name: document.getElementById('store').value,
-                    items_json: JSON.stringify(this.state.cart),
-                    subtotal: 0, shipping_fee: 60, total_price: 0
-                };
-                
-                try {
-                    const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify(orderData) }).then(r => r.json());
-                    if(res.status === 'success') {
-                        document.getElementById('orderIdDisplay').innerText = "訂單編號：" + res.order_id;
-                        this.navigate('success');
-                    } else { throw new Error(); }
-                } catch(e) { 
-                    alert("訂單送出失敗，請檢查網路連線或私訊 IG 告知我們。"); 
-                    btn.disabled = false; btn.innerText = "確認並送出訂單"; 
-                }
-            },
-            copyText(id) {
-                const t = document.getElementById(id).innerText;
-                const area = document.createElement("textarea");
-                area.value = t; document.body.appendChild(area); area.select();
-                document.execCommand('copy'); document.body.removeChild(area);
-                alert("已複製匯款帳號至剪貼簿");
-            }
-        };
-        app.init();
+            }));
+        });
     </script>
 </body>
 </html>
