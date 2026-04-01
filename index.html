@@ -1,36 +1,32 @@
 <!DOCTYPE html>
-<html lang="zh-Hant">
+<html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>Sourdough Cracker 訂購網</title>
+    <title>豪豪出包 | Sourdough Cracker</title>
     
     <!-- 引入字體 -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap" rel="stylesheet">
     
-    <!-- 引入圖示 -->
-    <script src="https://unpkg.com/lucide@latest"></script>
-
-    <!-- 引入 Tailwind CSS -->
+    <!-- 引入 React, ReactDOM, Babel, Tailwind, Framer Motion -->
+    <script src="https://unpkg.com/react@18/umd/react.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js" crossorigin></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://unpkg.com/framer-motion@10.16.4/dist/framer-motion.js"></script>
+
+    <!-- Tailwind 設定 -->
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        brand: {
-                            dark: '#14110F',
-                            grayDark: '#34312D',
-                            grayLight: '#7E7F83',
-                            primary: '#DDC9B4',
-                            primaryDark: '#BCAC9B',
-                            accent: '#7A6C5D',
-                            bg: '#F3F3F4',
-                            highlight1: '#2A3D45',
-                            highlight2: '#C17C74',
-                        }
+                        primary: { DEFAULT: '#DDC9B4', dark: '#BCAC9B' },
+                        accent: '#7A6C5D',
+                        highlight: { DEFAULT: '#2A3D45', red: '#C17C74' },
+                        cream: '#FDFBF9' // 極簡背景底色
                     },
                     fontFamily: {
                         sans: ['"Noto Sans TC"', 'sans-serif'],
@@ -40,467 +36,479 @@
         }
     </script>
 
-    <!-- 引入 Alpine.js -->
-    <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js"></script>
-
     <style>
-        .no-scrollbar::-webkit-scrollbar { display: none; }
-        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
-        body { background-color: #E5E5E5; -webkit-tap-highlight-color: transparent; }
-        [x-cloak] { display: none !important; }
-        
-        /* Loading 動畫 */
-        .loader {
-            width: 48px;
-            height: 48px;
-            border: 5px solid #DDC9B4;
-            border-bottom-color: #2A3D45;
-            border-radius: 50%;
-            display: inline-block;
-            box-sizing: border-box;
-            animation: rotation 1s linear infinite;
-        }
-        @keyframes rotation {
-            0% { transform: rotate(0deg); }
-            100% { transform: rotate(360deg); }
-        }
+        body { background-color: #FDFBF9; color: #2A3D45; -webkit-tap-highlight-color: transparent; }
+        /* 隱藏捲軸但保持可捲動 */
+        ::-webkit-scrollbar { width: 0px; background: transparent; }
+        .whitespace-pre-line { white-space: pre-line; }
+        .glass-nav { background: rgba(253, 251, 249, 0.85); backdrop-filter: blur(8px); border-bottom: 1px solid rgba(221, 201, 180, 0.3); }
     </style>
 </head>
-<body class="text-brand-dark antialiased font-sans flex justify-center">
+<body>
+    <div id="root"></div>
 
-    <!-- 手機版框架 -->
-    <div class="w-full max-w-md min-h-screen bg-brand-bg relative shadow-2xl overflow-hidden flex flex-col" x-data="shopApp()">
+    <script type="text/babel">
+        const { useState, useEffect, useMemo } = React;
+        const { motion, AnimatePresence } = window.Motion;
+
+        // ==========================================
+        // 1. 設定區：請填入您的 Google Apps Script URL
+        // ==========================================
+        const API_URL = "https://script.google.com/macros/s/AKfycbz27imZO4YtNtD2s8CKJh5GiiVf_lk8iwwNMbK3pDRfoJE9DEAUdon_vpf6TQTJzdB43w/exec"; 
         
-        <!-- ====== 載入中畫面 ====== -->
-        <div x-show="isLoading" 
-             x-transition.opacity.duration.500ms
-             class="absolute inset-0 z-50 bg-brand-bg flex flex-col items-center justify-center space-y-4" x-cloak>
-             <span class="loader"></span>
-             <p class="text-brand-highlight1 font-bold tracking-widest animate-pulse">載入最新商品中...</p>
-        </div>
+        // Mock 資料 (當 API_URL 未設定或載入失敗時的備用資料)
+        const mockData = {
+            settings: {
+                site_name: "豪豪出包",
+                logo_image_url: "https://duk.tw/hMyFFB.svg",
+                main_image_url: "https://duk.tw/tNbPxp.jpg",
+                brand_description: "Sourdough Cracker\n酸種酵母餅乾\nArtisan Snacks",
+                brand_statement: "酵母餅乾成分很簡單，核心元素就是酸種酵母。\n\n酸種酵母不是商業用的速發酵母粉，他是利用麵粉和水，經過長時間培養而來的。而酵母裡的乳酸菌會產生天然的酸香風味，成為酵母餅乾最核心的味道來源。\n\n製作餅乾前酵母會先冷藏，讓乳酸的味道變得比較濃厚。這樣一來搭配不同香料，酸感和香氣就會更加平衡，咀嚼起來也會更有層次。",
+                order_instructions: "2026年3月，酵母餅乾IG快閃試賣。\n全手工小量生產，謝謝支持與耐心等待，希望大家會喜歡！\n\n開放預訂：3/21 下午4:00\n截止預訂：3/22 上午11:00\n預計3/27陸續出貨\n\n(1) 全手工製作，餅乾形狀、大小和烤色不會全都一致\n(2) 本次訂單一律以「7-ELEVEN 常溫交貨便」寄送\n(3) 訂購時請確認中文姓名、手機和門市名稱已填寫正確\n(4) 如果你不確定訂單或匯款是否完成，請私訊IG",
+                shipping_fee: "60",
+                shipping_method: "7-11常溫交貨便"
+            },
+            products: [
+                { id: 1, name: "百里香酵母餅乾", price: 135, weight_grams: 150, description: "廚房西式香料的常備品，百里香木質調的氣息清爽而有個性...\n和餅乾麵團混合烘烤之後，百里香的香氣不會搶戲。隱約在麥香與堅果微焦香氣之下，好像淡淡的一股草地味。", ingredients: "天然酵母、中筋麵粉、海鹽、奶油、乾燥百里香、葵花油", main_image_url: "https://duk.tw/U7Fmfo.jpg", max_quantity: 3 },
+                { id: 2, name: "芝麻酵母餅乾", price: 135, weight_grams: 150, description: "黑芝麻台灣人很熟悉，即使放在酵母餅乾裡，我們還是認得。先是香氣，再來是在嘴裡咬一咬化開的油香，就已經讓人有默契地點點頭了！", ingredients: "天然酵母、中筋麵粉、海鹽、奶油、熟芝麻、葵花油", main_image_url: "https://duk.tw/PMFyh6.jpg", max_quantity: 3 }
+            ]
+        };
 
-        <!-- ====== 錯誤畫面 (若讀取失敗) ====== -->
-        <div x-show="!isLoading && isError" 
-             class="absolute inset-0 z-50 bg-brand-bg flex flex-col items-center justify-center p-6 text-center space-y-4" x-cloak>
-             <i data-lucide="alert-triangle" class="w-16 h-16 text-brand-highlight2"></i>
-             <h2 class="text-xl font-bold">哎呀！讀取資料失敗</h2>
-             <p class="text-brand-grayDark text-sm">請檢查您的網路連線，或重新整理頁面試試看。</p>
-             <button @click="fetchStoreData()" class="mt-4 bg-brand-highlight1 text-white px-6 py-2 rounded-xl">重試</button>
-        </div>
+        // ==========================================
+        // 2. SVG Icons
+        // ==========================================
+        const Icons = {
+            Cart: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="8" cy="21" r="1"/><circle cx="19" cy="21" r="1"/><path d="M2.05 2.05h2l2.66 12.42a2 2 0 0 0 2 1.58h9.78a2 2 0 0 0 1.95-1.57l1.65-7.43H5.12"/></svg>,
+            ArrowLeft: () => <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m12 19-7-7 7-7"/><path d="M19 12H5"/></svg>,
+            Plus: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/><path d="M12 5v14"/></svg>,
+            Minus: () => <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M5 12h14"/></svg>,
+            Trash: () => <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/></svg>
+        };
 
-        <!-- ====== 主要內容 (資料載入完成後顯示) ====== -->
-        <template x-if="!isLoading && !isError">
-            <div class="flex flex-col h-full w-full">
-                
-                <!-- Navbar -->
-                <header class="bg-brand-bg/90 backdrop-blur-md sticky top-0 z-40 border-b border-brand-primaryDark/20">
-                    <div class="flex items-center justify-between px-6 py-4">
-                        <div class="cursor-pointer font-bold text-xl tracking-widest text-brand-dark flex items-center gap-2" @click="changeView('home')">
-                            <!-- 如果後台有設定 Logo 圖片，則顯示圖片，否則顯示純文字 -->
-                            <template x-if="settings.logo_image_url">
-                                <img :src="settings.logo_image_url" class="h-8 w-auto object-contain" alt="Logo">
-                            </template>
-                            <span x-show="!settings.logo_image_url" x-text="settings.site_name || '豪豪出包'"></span>
-                        </div>
-                        
-                        <button 
-                            x-show="['home', 'shop', 'cart'].includes(currentView)"
-                            @click="changeView('cart')" 
-                            class="relative p-2 text-brand-highlight1 hover:text-brand-highlight2 transition-colors">
-                            <i data-lucide="shopping-bag"></i>
-                            <span 
-                                x-show="cartTotalItems > 0" 
-                                x-text="cartTotalItems"
-                                class="absolute top-0 right-0 bg-brand-highlight2 text-white text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center">
-                            </span>
-                        </button>
-                    </div>
-                </header>
+        // ==========================================
+        // 3. 頁面元件
+        // ==========================================
 
-                <main class="flex-1 overflow-y-auto no-scrollbar pb-24 relative">
-                    
-                    <!-- ====== 視圖 1: 首頁 (Home) ====== -->
-                    <div x-show="currentView === 'home'" 
-                         x-transition:enter="transition ease-out duration-500"
-                         x-transition:enter-start="opacity-0 translate-y-4"
-                         x-transition:enter-end="opacity-100 translate-y-0"
-                         class="space-y-8 pb-6" x-cloak>
-                        
-                        <!-- 動態主視覺大圖 -->
-                        <div class="w-full aspect-[4/3] bg-brand-primary/20 relative">
-                            <img :src="settings.main_image_url || 'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?auto=format&fit=crop&q=80&w=800'" 
-                                 class="w-full h-full object-cover" 
-                                 alt="主視覺">
-                        </div>
-
-                        <div class="px-6 space-y-10">
-                            <!-- 品牌視覺文字 -->
-                            <div class="text-center space-y-4">
-                                <h1 class="text-2xl font-bold tracking-widest text-brand-highlight1" style="white-space: pre-line" x-text="settings.brand_description"></h1>
-                            </div>
-
-                            <!-- 品牌理念 -->
-                            <div class="bg-white p-6 rounded-2xl shadow-sm border border-brand-primary/30 relative">
-                                <div class="absolute -top-3 left-6 bg-brand-primary px-3 py-1 rounded-full text-xs font-bold text-brand-highlight1">品牌理念</div>
-                                <p class="text-sm leading-relaxed text-brand-grayDark mt-2" style="white-space: pre-line" x-text="settings.brand_statement"></p>
-                            </div>
-
-                            <!-- 訂購須知 -->
-                            <div class="space-y-3">
-                                <h2 class="text-lg font-bold border-l-4 border-brand-highlight2 pl-3">訂購須知</h2>
-                                <div class="bg-brand-primary/10 p-5 rounded-2xl text-sm leading-relaxed text-brand-grayDark" style="white-space: pre-line" x-text="settings.order_instructions"></div>
-                            </div>
-
-                            <!-- CTA 按鈕 -->
-                            <button @click="changeView('shop')" class="w-full bg-brand-highlight1 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-opacity-90 transition-all active:scale-95 flex justify-center items-center gap-2">
-                                開始選購 <i data-lucide="arrow-right" class="w-5 h-5"></i>
-                            </button>
-                        </div>
-                    </div>
-
-
-                    <!-- ====== 視圖 2: 商品頁 (Shop) ====== -->
-                    <div x-show="currentView === 'shop'" 
-                         x-transition:enter="transition ease-out duration-500"
-                         x-transition:enter-start="opacity-0 translate-y-4"
-                         x-transition:enter-end="opacity-100 translate-y-0"
-                         class="p-6 space-y-8" x-cloak>
-                        
-                        <h2 class="text-2xl font-bold mb-6">產品選購</h2>
-
-                        <!-- 檢查是否有商品 -->
-                        <div x-show="products.length === 0" class="text-center py-10 text-brand-grayLight">
-                            <p>目前還沒有商品上架喔！</p>
-                        </div>
-
-                        <template x-for="product in products" :key="product.id">
-                            <div class="bg-white rounded-2xl overflow-hidden shadow-sm border border-brand-primary/30 flex flex-col">
-                                <!-- 動態商品圖片 -->
-                                <div class="h-48 bg-brand-primary/20 w-full relative">
-                                    <img :src="product.main_image_url || 'https://images.unsplash.com/photo-1558961363-fa8fdf82db35?auto=format&fit=crop&q=80&w=600'" 
-                                         class="w-full h-full object-cover">
-                                    <div x-show="product.max_quantity <= 0" class="absolute inset-0 bg-black/50 flex items-center justify-center backdrop-blur-sm">
-                                        <span class="text-white font-bold tracking-widest border-2 border-white px-4 py-2 rounded-lg">已售完</span>
-                                    </div>
-                                </div>
-                                
-                                <div class="p-5 space-y-4">
-                                    <div class="flex justify-between items-start">
-                                        <div>
-                                            <h3 class="text-lg font-bold" x-text="product.name"></h3>
-                                            <p class="text-xs text-brand-grayLight mt-1" x-text="`重量: ${product.weight_grams}g`"></p>
-                                        </div>
-                                        <div class="text-brand-highlight2 font-bold text-lg" x-text="`NT$ ${product.price}`"></div>
-                                    </div>
-                                    
-                                    <p class="text-sm text-brand-grayDark leading-relaxed" style="white-space: pre-line" x-text="product.description"></p>
-                                    
-                                    <div class="text-xs text-brand-grayLight bg-brand-bg p-3 rounded-lg">
-                                        <span class="font-bold">成分：</span><span x-text="product.ingredients"></span>
-                                    </div>
-
-                                    <!-- 加入購物車控制 -->
-                                    <div class="pt-4 border-t border-brand-bg flex items-center justify-between" x-show="product.max_quantity > 0">
-                                        <div class="text-sm text-brand-accent">
-                                            <span x-text="`每人限購 ${product.max_quantity} 份`"></span>
-                                        </div>
-                                        
-                                        <div class="flex items-center gap-3 bg-brand-bg rounded-lg p-1">
-                                            <button @click="removeFromCart(product)" class="w-8 h-8 flex items-center justify-center text-brand-highlight1 bg-white rounded-md shadow-sm active:scale-95 disabled:opacity-50" :disabled="getCartQuantity(product.id) === 0">
-                                                <i data-lucide="minus" class="w-4 h-4"></i>
-                                            </button>
-                                            <span class="w-4 text-center font-bold" x-text="getCartQuantity(product.id)"></span>
-                                            <button @click="addToCart(product)" class="w-8 h-8 flex items-center justify-center text-white bg-brand-highlight1 rounded-md shadow-sm active:scale-95 disabled:opacity-50" :disabled="getCartQuantity(product.id) >= product.max_quantity">
-                                                <i data-lucide="plus" class="w-4 h-4"></i>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        </template>
-                    </div>
-
-                    <!-- ====== 視圖 3: 購物車 (Cart) ====== -->
-                    <div x-show="currentView === 'cart'" class="p-6 space-y-6" x-cloak>
-                        <!-- (同前一版邏輯，省略部分重複內容以保持簡潔，直接延續) -->
-                        <div class="flex items-center gap-3 mb-6">
-                            <button @click="changeView('shop')" class="text-brand-grayLight hover:text-brand-dark"><i data-lucide="arrow-left"></i></button>
-                            <h2 class="text-2xl font-bold">購物車</h2>
-                        </div>
-
-                        <template x-if="cart.length === 0">
-                            <div class="text-center py-20 text-brand-grayLight space-y-4">
-                                <i data-lucide="shopping-cart" class="w-16 h-16 mx-auto opacity-50"></i>
-                                <p>購物車是空的喔！</p>
-                                <button @click="changeView('shop')" class="px-6 py-2 bg-brand-primary text-brand-dark rounded-full text-sm font-bold">去逛逛</button>
-                            </div>
-                        </template>
-
-                        <template x-if="cart.length > 0">
-                            <div class="space-y-6">
-                                <div class="space-y-4">
-                                    <template x-for="item in cart" :key="item.id">
-                                        <div class="bg-white p-4 rounded-xl flex items-center justify-between shadow-sm border border-brand-primary/20">
-                                            <div class="flex-1">
-                                                <h4 class="font-bold text-sm" x-text="item.name"></h4>
-                                                <div class="text-brand-highlight2 text-sm mt-1" x-text="`NT$ ${item.price}`"></div>
-                                            </div>
-                                            <div class="flex items-center gap-3 bg-brand-bg rounded-lg p-1">
-                                                <button @click="removeFromCart(item)" class="w-7 h-7 flex items-center justify-center text-brand-highlight1 bg-white rounded-md shadow-sm active:scale-95">
-                                                    <i data-lucide="minus" class="w-4 h-4"></i>
-                                                </button>
-                                                <span class="w-4 text-center font-bold text-sm" x-text="item.quantity"></span>
-                                                <button @click="addToCart(item)" class="w-7 h-7 flex items-center justify-center text-white bg-brand-highlight1 rounded-md shadow-sm active:scale-95 disabled:opacity-50" :disabled="item.quantity >= item.max_quantity">
-                                                    <i data-lucide="plus" class="w-4 h-4"></i>
-                                                </button>
-                                            </div>
-                                        </div>
-                                    </template>
-                                </div>
-                                <div class="bg-brand-primaryDark/10 p-5 rounded-xl space-y-3 text-sm">
-                                    <div class="flex justify-between">
-                                        <span class="text-brand-grayDark">商品小計</span>
-                                        <span class="font-bold" x-text="`NT$ ${cartSubtotal}`"></span>
-                                    </div>
-                                    <div class="flex justify-between">
-                                        <span class="text-brand-grayDark" x-text="`運費 (${settings.shipping_method || '常溫交貨便'})`"></span>
-                                        <span class="font-bold" x-text="`NT$ ${settings.shipping_fee || 0}`"></span>
-                                    </div>
-                                    <div class="border-t border-brand-primary/30 pt-3 flex justify-between items-center mt-2">
-                                        <span class="font-bold text-base">總計</span>
-                                        <span class="font-bold text-xl text-brand-highlight2" x-text="`NT$ ${cartSubtotal + parseInt(settings.shipping_fee || 0)}`"></span>
-                                    </div>
-                                </div>
-                                <button @click="changeView('checkout')" class="w-full bg-brand-highlight1 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-opacity-90 transition-all active:scale-95">
-                                    下一步：填寫資料
-                                </button>
-                            </div>
-                        </template>
-                    </div>
-
-                    <!-- ====== 視圖 4: 結帳表單 (Checkout) ====== -->
-                    <div x-show="currentView === 'checkout'" class="p-6 space-y-6" x-cloak>
-                        <div class="flex items-center gap-3 mb-4">
-                            <button @click="changeView('cart')" class="text-brand-grayLight hover:text-brand-dark"><i data-lucide="arrow-left"></i></button>
-                            <h2 class="text-2xl font-bold">寄送資料</h2>
-                        </div>
-                        <form @submit.prevent="submitOrder" class="space-y-5">
-                            <div>
-                                <label class="block text-sm font-bold mb-2">真實姓名 (中文)</label>
-                                <input type="text" x-model="formData.name" required class="w-full bg-white border border-brand-primaryDark/30 rounded-xl px-4 py-3 focus:outline-none focus:border-brand-highlight1">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-bold mb-2">手機號碼</label>
-                                <input type="tel" x-model="formData.phone" required pattern="09\d{8}" class="w-full bg-white border border-brand-primaryDark/30 rounded-xl px-4 py-3 focus:outline-none focus:border-brand-highlight1">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-bold mb-2">Instagram 帳號 <span class="text-brand-grayLight font-normal text-xs">(選填)</span></label>
-                                <input type="text" x-model="formData.ig" class="w-full bg-white border border-brand-primaryDark/30 rounded-xl px-4 py-3 focus:outline-none focus:border-brand-highlight1">
-                            </div>
-                            <div class="pt-4 border-t border-brand-primaryDark/20">
-                                <label class="block text-sm font-bold mb-2">7-11 取件門市名稱</label>
-                                <input type="text" x-model="formData.cvs_store_name" required class="w-full bg-white border border-brand-primaryDark/30 rounded-xl px-4 py-3 focus:outline-none focus:border-brand-highlight1">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-bold mb-2">7-11 店號 <span class="text-brand-grayLight font-normal text-xs">(6碼數字)</span></label>
-                                <input type="text" x-model="formData.cvs_store_number" required pattern="\d{6}" class="w-full bg-white border border-brand-primaryDark/30 rounded-xl px-4 py-3 focus:outline-none focus:border-brand-highlight1">
-                            </div>
-                            <div class="pt-6">
-                                <button type="submit" class="w-full bg-brand-highlight1 text-white font-bold py-4 rounded-xl shadow-lg hover:bg-opacity-90 transition-all active:scale-95 flex justify-center items-center gap-2 disabled:opacity-70" :disabled="isSubmitting">
-                                    <span x-show="!isSubmitting">確認送出訂單</span>
-                                    <span x-show="isSubmitting" class="flex items-center gap-2">
-                                        <i data-lucide="loader-2" class="w-5 h-5 animate-spin"></i> 處理中...
-                                    </span>
-                                </button>
-                            </div>
-                        </form>
-                    </div>
-
-                    <!-- ====== 視圖 5: 成功頁面 (Success) ====== -->
-                    <div x-show="currentView === 'success'" class="p-6 space-y-8 text-center mt-10" x-cloak>
-                        <div class="w-20 h-20 mx-auto bg-green-100 text-green-600 rounded-full flex items-center justify-center shadow-inner mb-6">
-                            <i data-lucide="check" class="w-10 h-10"></i>
-                        </div>
-                        <h2 class="text-2xl font-bold">訂購成功！</h2>
-                        <p class="text-brand-grayDark text-sm">感謝您的訂購。您的訂單已保留。</p>
-                        <p class="text-xs text-brand-highlight2 font-bold" x-text="`訂單編號: #${orderId}`"></p>
-                        
-                        <div class="bg-white p-6 rounded-2xl shadow-sm border border-brand-primary/30 text-left space-y-4 mt-8">
-                            <h3 class="font-bold border-b border-brand-bg pb-2">匯款資訊</h3>
-                            <div>
-                                <p class="text-xs text-brand-grayLight mb-1">匯款帳號</p>
-                                <div class="flex items-center justify-between bg-brand-bg p-3 rounded-lg">
-                                    <span class="font-bold font-mono tracking-wider" x-text="settings.bank_account"></span>
-                                    <button @click="copyText(settings.bank_account)" class="text-brand-highlight1 text-sm bg-white px-2 py-1 rounded shadow-sm">複製</button>
-                                </div>
-                            </div>
-                            <div>
-                                <p class="text-xs text-brand-grayLight mb-1">應付總額</p>
-                                <p class="font-bold text-xl text-brand-highlight2" x-text="`NT$ ${finalTotal}`"></p>
-                            </div>
-                            <div class="text-xs text-brand-grayDark leading-relaxed pt-2" style="white-space: pre-line" x-text="settings.bank_reminder"></div>
-                        </div>
-                        <div class="pt-8">
-                            <button @click="resetApp()" class="text-brand-grayDark text-sm underline hover:text-brand-highlight1">返回首頁</button>
-                        </div>
-                    </div>
-                </main>
-
-                <!-- 浮動購物車提示 -->
-                <div x-show="currentView === 'shop' && cartTotalItems > 0"
-                     class="absolute bottom-0 left-0 right-0 p-4 bg-white border-t border-brand-primary/30 shadow-[0_-10px_20px_-10px_rgba(0,0,0,0.1)] z-50 flex items-center justify-between" x-cloak>
-                     <div>
-                         <p class="text-xs text-brand-grayLight mb-0.5">購物車共 <span x-text="cartTotalItems"></span> 件</p>
-                         <p class="font-bold text-brand-highlight2" x-text="`NT$ ${cartSubtotal}`"></p>
-                     </div>
-                     <button @click="changeView('cart')" class="bg-brand-highlight1 text-white px-6 py-2.5 rounded-full font-bold text-sm shadow-md active:scale-95">
-                         結帳去
-                     </button>
+        // --- 導覽列 ---
+        const Navbar = ({ cartCount, onNavigate, logoUrl }) => (
+            <div className="fixed top-0 left-0 right-0 z-50 glass-nav px-6 py-4 flex justify-between items-center">
+                <div className="flex items-center cursor-pointer" onClick={() => onNavigate('home')}>
+                    {logoUrl ? <img src={logoUrl} alt="Logo" className="h-8" /> : <span className="font-bold tracking-widest text-lg">豪豪出包</span>}
+                </div>
+                <div className="relative cursor-pointer p-2" onClick={() => onNavigate('cart')}>
+                    <Icons.Cart />
+                    {cartCount > 0 && (
+                        <span className="absolute top-0 right-0 bg-highlight-red text-white text-[10px] font-bold h-4 w-4 rounded-full flex items-center justify-center">
+                            {cartCount}
+                        </span>
+                    )}
                 </div>
             </div>
-        </template>
-    </div>
+        );
 
-    <script>
-        // 【重要】請將下方替換為您完成步驟二後取得的 Google Apps Script 網址
-        const GOOGLE_APP_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxbKkjvmtU-lCU5kbbn6ERLF9PUKiaIfin2jssMx6Erh3jSxfUy363pP7rWvHNCy4xnhA/exec';
+        // --- 首頁 ---
+        const HomeView = ({ settings, onNavigate }) => (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="pt-24 pb-20 px-6 max-w-lg mx-auto">
+                {/* 視覺圖 */}
+                <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.1 }}>
+                    {settings.main_image_url ? (
+                        <img src={settings.main_image_url} alt="Main Visual" className="w-full h-[60vh] object-cover rounded-[2rem] shadow-sm mb-12" />
+                    ) : (
+                        <div className="w-full h-[60vh] bg-primary-dark rounded-[2rem] mb-12 flex items-center justify-center text-white">Main Image</div>
+                    )}
+                </motion.div>
 
-        document.addEventListener('alpine:init', () => {
-            Alpine.data('shopApp', () => ({
-                isLoading: true,
-                isError: false,
-                currentView: 'home',
-                isSubmitting: false,
-                orderId: '',
-                finalTotal: 0,
+                {/* 品牌理念 */}
+                <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.2 }} className="text-center mb-16">
+                    <h1 className="text-2xl font-bold tracking-widest text-highlight mb-4 whitespace-pre-line">{settings.brand_description}</h1>
+                    <p className="text-accent text-sm leading-relaxed whitespace-pre-line text-left mt-8">{settings.brand_statement}</p>
+                </motion.div>
+
+                {/* 購買須知 */}
+                <motion.div initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: 0.3 }} className="bg-primary bg-opacity-20 p-6 rounded-2xl mb-12 text-sm text-highlight leading-relaxed whitespace-pre-line">
+                    <h3 className="font-bold mb-3 text-base">🛒 訂購須知</h3>
+                    {settings.order_instructions}
+                </motion.div>
+
+                <motion.button 
+                    whileHover={{ scale: 1.02 }} whileTap={{ scale: 0.98 }}
+                    onClick={() => onNavigate('products')}
+                    className="w-full bg-highlight text-white py-4 rounded-full font-bold tracking-widest shadow-md hover:bg-highlight-dark transition-colors">
+                    開始訂購
+                </motion.button>
+            </motion.div>
+        );
+
+        // --- 產品列表頁 ---
+        const ProductsView = ({ products, onNavigate }) => (
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="pt-24 pb-24 px-6 max-w-lg mx-auto">
+                <h2 className="text-xl font-bold tracking-widest mb-8 text-center">產品列表</h2>
+                <div className="grid grid-cols-2 gap-4">
+                    {products.map((product, idx) => (
+                        <motion.div 
+                            key={product.id}
+                            initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} transition={{ delay: idx * 0.1 }}
+                            onClick={() => onNavigate('productDetail', product.id)}
+                            className="cursor-pointer group flex flex-col"
+                        >
+                            <div className="aspect-square bg-primary-dark rounded-2xl overflow-hidden mb-3 relative">
+                                {product.main_image_url ? (
+                                    <img src={product.main_image_url} alt={product.name} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
+                                ) : (
+                                    <div className="w-full h-full flex items-center justify-center text-white text-xs">No Image</div>
+                                )}
+                            </div>
+                            <h3 className="font-bold text-sm text-highlight">{product.name}</h3>
+                            <p className="text-accent text-xs mt-1">NT$ {product.price}</p>
+                        </motion.div>
+                    ))}
+                </div>
+            </motion.div>
+        );
+
+        // --- 產品詳細頁 ---
+        const ProductDetailView = ({ product, onNavigate, onAddToCart }) => {
+            const [quantity, setQuantity] = useState(1);
+            const maxQ = parseInt(product.max_quantity) || 5;
+
+            const handleAdd = () => {
+                onAddToCart({ ...product, quantity });
+                onNavigate('cart');
+            };
+
+            return (
+                <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0, x: -20 }} className="pt-20 pb-32 px-6 max-w-lg mx-auto">
+                    <button onClick={() => onNavigate('products')} className="flex items-center text-accent mb-6 hover:text-highlight">
+                        <Icons.ArrowLeft /> <span className="ml-2 text-sm font-medium">返回列表</span>
+                    </button>
+
+                    <div className="w-full aspect-[4/5] bg-primary-dark rounded-[2rem] overflow-hidden mb-8 shadow-sm">
+                        {product.main_image_url && <img src={product.main_image_url} alt={product.name} className="w-full h-full object-cover" />}
+                    </div>
+
+                    <h2 className="text-2xl font-bold text-highlight mb-2">{product.name}</h2>
+                    <div className="flex items-end gap-2 mb-8">
+                        <span className="text-xl font-bold text-highlight-red">NT$ {product.price}</span>
+                        <span className="text-sm text-accent pb-1">/ {product.weight_grams}g</span>
+                    </div>
+
+                    <div className="space-y-8 text-sm text-highlight leading-relaxed mb-12">
+                        <div>
+                            <p className="whitespace-pre-line text-accent">{product.description}</p>
+                        </div>
+                        <div className="bg-cream border border-primary p-4 rounded-xl">
+                            <span className="font-bold block mb-1">成分：</span>
+                            <span className="text-accent whitespace-pre-line">{product.ingredients}</span>
+                        </div>
+                    </div>
+
+                    {/* 底部固定加入購物車列 */}
+                    <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-primary p-4 px-6 flex items-center justify-between gap-4 max-w-lg mx-auto z-40 shadow-[0_-10px_30px_rgba(0,0,0,0.05)]">
+                        <div className="flex items-center bg-cream border border-primary rounded-full px-2 py-2">
+                            <button onClick={() => setQuantity(Math.max(1, quantity - 1))} className="p-2 text-highlight hover:bg-primary rounded-full transition"><Icons.Minus /></button>
+                            <span className="w-8 text-center font-bold text-highlight">{quantity}</span>
+                            <button onClick={() => setQuantity(Math.min(maxQ, quantity + 1))} className="p-2 text-highlight hover:bg-primary rounded-full transition"><Icons.Plus /></button>
+                        </div>
+                        <button onClick={handleAdd} className="flex-1 bg-highlight text-white py-4 rounded-full font-bold tracking-widest shadow-md hover:bg-highlight-dark transition-colors">
+                            加入購物車
+                        </button>
+                    </div>
+                </motion.div>
+            );
+        };
+
+        // --- 購物車頁面 ---
+        const CartView = ({ cart, updateQuantity, removeItem, settings, onNavigate }) => {
+            const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+            const shippingFee = parseInt(settings.shipping_fee) || 60;
+            const total = subtotal + shippingFee;
+
+            if (cart.length === 0) {
+                return (
+                    <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="pt-32 px-6 text-center max-w-lg mx-auto">
+                        <div className="w-20 h-20 bg-primary opacity-30 rounded-full flex items-center justify-center mx-auto mb-6">
+                            <Icons.Cart />
+                        </div>
+                        <h2 className="text-xl font-bold text-highlight mb-4">購物車是空的</h2>
+                        <button onClick={() => onNavigate('products')} className="text-accent underline underline-offset-4">去逛逛餅乾</button>
+                    </motion.div>
+                );
+            }
+
+            return (
+                <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} exit={{ opacity: 0 }} className="pt-24 pb-32 px-6 max-w-lg mx-auto">
+                    <div className="flex justify-between items-center mb-8">
+                        <h2 className="text-xl font-bold tracking-widest text-highlight">購物車</h2>
+                        <button onClick={() => onNavigate('products')} className="text-sm text-accent underline">繼續選購</button>
+                    </div>
+
+                    <div className="space-y-6 mb-12">
+                        {cart.map(item => (
+                            <div key={item.id} className="flex items-center gap-4 bg-white p-4 rounded-2xl shadow-sm border border-primary border-opacity-30">
+                                <img src={item.main_image_url} alt={item.name} className="w-20 h-20 object-cover rounded-xl" />
+                                <div className="flex-1">
+                                    <h3 className="font-bold text-highlight text-sm mb-1">{item.name}</h3>
+                                    <p className="text-highlight-red font-medium text-sm mb-2">NT$ {item.price}</p>
+                                    <div className="flex items-center justify-between">
+                                        <div className="flex items-center bg-cream border border-primary rounded-full px-1 py-1">
+                                            <button onClick={() => updateQuantity(item.id, item.quantity - 1)} className="p-1 text-accent"><Icons.Minus /></button>
+                                            <span className="w-6 text-center text-sm font-bold">{item.quantity}</span>
+                                            <button onClick={() => updateQuantity(item.id, item.quantity + 1)} className="p-1 text-accent"><Icons.Plus /></button>
+                                        </div>
+                                        <button onClick={() => removeItem(item.id)} className="p-2 text-accent hover:text-highlight-red"><Icons.Trash /></button>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+
+                    <div className="bg-primary bg-opacity-10 p-6 rounded-3xl space-y-3 text-sm text-highlight mb-8">
+                        <div className="flex justify-between"><span>小計</span><span>NT$ {subtotal}</span></div>
+                        <div className="flex justify-between"><span>運費 ({settings.shipping_method})</span><span>NT$ {shippingFee}</span></div>
+                        <div className="border-t border-primary border-opacity-30 pt-3 flex justify-between font-bold text-lg mt-2">
+                            <span>總計</span><span className="text-highlight-red">NT$ {total}</span>
+                        </div>
+                    </div>
+
+                    <button onClick={() => onNavigate('checkout')} className="w-full bg-highlight text-white py-4 rounded-full font-bold tracking-widest shadow-md hover:bg-highlight-dark transition-colors">
+                        填寫寄送資料
+                    </button>
+                </motion.div>
+            );
+        };
+
+        // --- 結帳表單頁 ---
+        const CheckoutView = ({ cart, settings, onNavigate, onSubmitOrder }) => {
+            const [formData, setFormData] = useState({
+                customer_name: '', phone: '', ig_account: '', email: '', cvs_store_name: '', cvs_store_number: ''
+            });
+            const [isSubmitting, setIsSubmitting] = useState(false);
+
+            const subtotal = cart.reduce((sum, item) => sum + item.price * item.quantity, 0);
+            const shippingFee = parseInt(settings.shipping_fee) || 60;
+            
+            const handleChange = (e) => setFormData({ ...formData, [e.target.name]: e.target.value });
+
+            const handleSubmit = async (e) => {
+                e.preventDefault();
+                setIsSubmitting(true);
                 
-                settings: {},
-                products: [],
-                cart: [],
-                formData: { name: '', phone: '', ig: '', cvs_store_name: '', cvs_store_number: '' },
+                const orderData = {
+                    ...formData,
+                    items: cart.map(item => ({ id: item.id, name: item.name, quantity: item.quantity, price: item.price })),
+                    subtotal: subtotal,
+                    shipping_fee: shippingFee,
+                    total_price: subtotal + shippingFee
+                };
 
-                init() {
-                    this.fetchStoreData();
-                    
-                    this.$watch('currentView', () => {
-                        window.scrollTo(0, 0);
-                        setTimeout(() => lucide.createIcons(), 50);
-                    });
-                },
+                const success = await onSubmitOrder(orderData);
+                setIsSubmitting(false);
+                if (success) {
+                    onNavigate('success');
+                } else {
+                    alert('訂單送出失敗，請稍後再試或私訊 IG 聯繫我們。');
+                }
+            };
 
-                // ==== 1. 向 Google Sheet 抓取設定與產品資料 ====
-                async fetchStoreData() {
-                    this.isLoading = true;
-                    this.isError = false;
-                    
-                    if(GOOGLE_APP_SCRIPT_URL === 'YOUR_GOOGLE_APP_SCRIPT_URL_HERE') {
-                        // 如果還沒填入真實網址，給點假資料方便預覽設計
-                        setTimeout(() => {
-                            this.settings = { site_name: "豪豪出包 (預覽測試)", order_instructions: "請先綁定 Google Sheet API" };
-                            this.products = [];
-                            this.isLoading = false;
-                            setTimeout(() => lucide.createIcons(), 50);
-                        }, 1000);
+            return (
+                <motion.div initial={{ opacity: 0, x: 20 }} animate={{ opacity: 1, x: 0 }} className="pt-24 pb-32 px-6 max-w-lg mx-auto">
+                    <button onClick={() => onNavigate('cart')} className="flex items-center text-accent mb-8 hover:text-highlight">
+                        <Icons.ArrowLeft /> <span className="ml-2 text-sm font-medium">返回購物車</span>
+                    </button>
+
+                    <h2 className="text-2xl font-bold tracking-widest text-highlight mb-6">收件資訊</h2>
+                    <p className="text-xs text-accent mb-8">本次寄送一律使用 {settings.shipping_method}，請確實填寫真實姓名與門市資訊。</p>
+
+                    <form onSubmit={handleSubmit} className="space-y-5">
+                        <div>
+                            <label className="block text-sm font-bold text-highlight mb-1">真實姓名 *</label>
+                            <input required type="text" name="customer_name" value={formData.customer_name} onChange={handleChange} className="w-full border-b border-primary py-2 bg-transparent focus:outline-none focus:border-highlight transition-colors" placeholder="取件核對身份用" />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-bold text-highlight mb-1">手機號碼 *</label>
+                            <input required type="tel" name="phone" value={formData.phone} onChange={handleChange} className="w-full border-b border-primary py-2 bg-transparent focus:outline-none focus:border-highlight transition-colors" placeholder="09xxxxxxxx" />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-bold text-highlight mb-1">IG 帳號 *</label>
+                            <input required type="text" name="ig_account" value={formData.ig_account} onChange={handleChange} className="w-full border-b border-primary py-2 bg-transparent focus:outline-none focus:border-highlight transition-colors" placeholder="聯絡及後續通知用" />
+                        </div>
+                        <div>
+                            <label className="block text-sm font-bold text-highlight mb-1">Email</label>
+                            <input type="email" name="email" value={formData.email} onChange={handleChange} className="w-full border-b border-primary py-2 bg-transparent focus:outline-none focus:border-highlight transition-colors" placeholder="選填" />
+                        </div>
+                        
+                        <div className="pt-4 border-t border-primary border-opacity-30">
+                            <h3 className="font-bold text-highlight mb-4">7-11 取件門市</h3>
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-bold text-highlight mb-1">門市名稱 *</label>
+                                    <input required type="text" name="cvs_store_name" value={formData.cvs_store_name} onChange={handleChange} className="w-full border-b border-primary py-2 bg-transparent focus:outline-none focus:border-highlight transition-colors" placeholder="例如：台大門市" />
+                                </div>
+                                <div>
+                                    <label className="block text-sm font-bold text-highlight mb-1">門市店號 *</label>
+                                    <input required type="text" name="cvs_store_number" value={formData.cvs_store_number} onChange={handleChange} className="w-full border-b border-primary py-2 bg-transparent focus:outline-none focus:border-highlight transition-colors" placeholder="6碼數字" />
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="pt-8">
+                            <button type="submit" disabled={isSubmitting} className="w-full bg-highlight text-white py-4 rounded-full font-bold tracking-widest shadow-md hover:bg-highlight-dark transition-colors disabled:opacity-50 flex justify-center items-center">
+                                {isSubmitting ? '處理中...' : `確認送出 (NT$ ${subtotal + shippingFee})`}
+                            </button>
+                        </div>
+                    </form>
+                </motion.div>
+            );
+        };
+
+        // --- 成功頁面 ---
+        const SuccessView = ({ orderId, onNavigate }) => (
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} className="pt-32 px-6 text-center max-w-lg mx-auto">
+                <div className="w-24 h-24 bg-primary bg-opacity-20 rounded-full flex items-center justify-center mx-auto mb-8 text-highlight text-4xl">
+                    🎉
+                </div>
+                <h2 className="text-2xl font-bold text-highlight mb-4">訂單已送出！</h2>
+                <p className="text-accent text-sm mb-2">感謝您的訂購，我們會盡快為您製作。</p>
+                {orderId && <p className="bg-cream border border-primary p-3 rounded-lg text-sm font-medium text-highlight mb-8 inline-block">訂單編號: {orderId}</p>}
+                
+                <div className="text-left bg-white p-6 rounded-2xl shadow-sm border border-primary border-opacity-30 text-sm text-highlight leading-relaxed mb-8">
+                    <p className="font-bold mb-2">接下來請注意：</p>
+                    <ol className="list-decimal list-inside space-y-2 text-accent">
+                        <li>我們會透過 IG 訊息與您核對訂單與匯款資訊。</li>
+                        <li>匯款完成後才算訂單成立。</li>
+                        <li>出貨時會另行通知。</li>
+                    </ol>
+                </div>
+
+                <button onClick={() => onNavigate('home')} className="text-accent underline underline-offset-4 font-bold">返回首頁</button>
+            </motion.div>
+        );
+
+
+        // ==========================================
+        // 4. 主應用程式 (狀態管理)
+        // ==========================================
+        const App = () => {
+            const [view, setView] = useState('home'); // home, products, productDetail, cart, checkout, success
+            const [activeProductId, setActiveProductId] = useState(null);
+            
+            const [cart, setCart] = useState([]);
+            const [settings, setSettings] = useState(mockData.settings);
+            const [products, setProducts] = useState(mockData.products);
+            const [loading, setLoading] = useState(true);
+            const [lastOrderId, setLastOrderId] = useState(null);
+
+            // 載入資料
+            useEffect(() => {
+                const fetchData = async () => {
+                    if (!API_URL || API_URL === "https://script.google.com/macros/s/AKfycbz27imZO4YtNtD2s8CKJh5GiiVf_lk8iwwNMbK3pDRfoJE9DEAUdon_vpf6TQTJzdB43w/exec") {
+                        console.log("Using Mock Data (API_URL not set)");
+                        setLoading(false);
                         return;
                     }
-
                     try {
-                        // 使用 GET 方法呼叫 API
-                        const response = await fetch(GOOGLE_APP_SCRIPT_URL);
+                        const response = await fetch(API_URL);
                         const result = await response.json();
-                        
-                        if(result.status === 'success') {
-                            this.settings = result.data.settings;
-                            
-                            // 過濾掉隱藏的商品並依照 sort_order 排序
-                            let rawProducts = result.data.products;
-                            this.products = rawProducts
-                                .filter(p => p.is_visible === true || p.is_visible === 'TRUE')
-                                .sort((a, b) => (a.sort_order || 99) - (b.sort_order || 99));
-                            
-                            this.isLoading = false;
-                            setTimeout(() => lucide.createIcons(), 50);
-                        } else {
-                            throw new Error('Data format error');
+                        if (result.status === 'success') {
+                            setSettings(result.data.settings);
+                            setProducts(result.data.products);
                         }
                     } catch (error) {
-                        console.error('Fetch error:', error);
-                        this.isError = true;
-                        this.isLoading = false;
+                        console.error("Fetch data failed, falling back to mock data", error);
+                    } finally {
+                        setLoading(false);
                     }
-                },
+                };
+                fetchData();
+            }, []);
 
-                // ==== 2. 將訂單送回 Google Sheet ====
-                async submitOrder() {
-                    if (this.cart.length === 0) return;
-                    this.isSubmitting = true;
+            // 導航邏輯
+            const navigate = (targetView, id = null) => {
+                window.scrollTo(0, 0);
+                if (targetView === 'productDetail') setActiveProductId(id);
+                setView(targetView);
+            };
 
-                    const shippingFee = parseInt(this.settings.shipping_fee || 0);
-
-                    const orderPayload = {
-                        created_at: new Date().toISOString(),
-                        customer_name: this.formData.name,
-                        ig_account: this.formData.ig,
-                        phone: this.formData.phone,
-                        cvs_store_name: this.formData.cvs_store_name,
-                        cvs_store_number: this.formData.cvs_store_number,
-                        items: JSON.stringify(this.cart.map(item => `${item.name}x${item.quantity}`).join(', ')),
-                        subtotal: this.cartSubtotal,
-                        shipping_fee: shippingFee,
-                        total_price: this.cartSubtotal + shippingFee,
-                        status: "new"
-                    };
-
-                    try {
-                        const response = await fetch(GOOGLE_APP_SCRIPT_URL, {
-                            method: 'POST',
-                            mode: 'no-cors', // 重要：避免跨網域寫入被阻擋
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify(orderPayload)
-                        });
-                        
-                        // 產生前端顯示用的訂單編號
-                        this.orderId = 'ORD' + Math.floor(1000 + Math.random() * 9000);
-                        this.finalTotal = this.cartSubtotal + shippingFee;
-                        
-                        setTimeout(() => {
-                            this.isSubmitting = false;
-                            this.changeView('success');
-                        }, 800);
-
-                    } catch (error) {
-                        alert('送出失敗，請檢查網路連線。');
-                        this.isSubmitting = false;
+            // 購物車邏輯
+            const addToCart = (product) => {
+                setCart(prev => {
+                    const existing = prev.find(item => item.id === product.id);
+                    if (existing) {
+                        return prev.map(item => item.id === product.id ? { ...item, quantity: item.quantity + product.quantity } : item);
                     }
-                },
+                    return [...prev, product];
+                });
+            };
 
-                // (保留原有的購物車邏輯)
-                changeView(view) { this.currentView = view; },
-                getCartQuantity(productId) { const i = this.cart.find(i => i.id === productId); return i ? i.quantity : 0; },
-                addToCart(product) {
-                    const existingItem = this.cart.find(i => i.id === product.id);
-                    if (existingItem) { if (existingItem.quantity < product.max_quantity) existingItem.quantity++; } 
-                    else { this.cart.push({ ...product, quantity: 1 }); }
-                },
-                removeFromCart(product) {
-                    const index = this.cart.findIndex(i => i.id === product.id);
-                    if (index !== -1) { if (this.cart[index].quantity > 1) this.cart[index].quantity--; else this.cart.splice(index, 1); }
-                },
-                get cartTotalItems() { return this.cart.reduce((total, item) => total + item.quantity, 0); },
-                get cartSubtotal() { return this.cart.reduce((total, item) => total + (parseInt(item.price) * item.quantity), 0); },
-                copyText(text) {
-                    const tempInput = document.createElement("input");
-                    tempInput.value = text;
-                    document.body.appendChild(tempInput); tempInput.select(); document.execCommand("copy"); document.body.removeChild(tempInput);
-                    alert('已複製帳號！');
-                },
-                resetApp() {
-                    this.cart = [];
-                    this.formData = { name: '', phone: '', ig: '', cvs_store_name: '', cvs_store_number: '' };
-                    this.changeView('home');
+            const updateQuantity = (id, newQuantity) => {
+                if (newQuantity < 1) return;
+                const productDef = products.find(p => p.id === id);
+                const maxQ = productDef ? (parseInt(productDef.max_quantity) || 99) : 99;
+                if (newQuantity > maxQ) return;
+                
+                setCart(prev => prev.map(item => item.id === id ? { ...item, quantity: newQuantity } : item));
+            };
+
+            const removeItem = (id) => {
+                setCart(prev => prev.filter(item => item.id !== id));
+            };
+
+            // 送出訂單邏輯
+            const submitOrder = async (orderData) => {
+                if (!API_URL || API_URL === "https://script.google.com/macros/s/AKfycbz27imZO4YtNtD2s8CKJh5GiiVf_lk8iwwNMbK3pDRfoJE9DEAUdon_vpf6TQTJzdB43w/exec") {
+                    console.log("Mock Submit:", orderData);
+                    setLastOrderId("ORD-MOCK-1234");
+                    setCart([]);
+                    return true;
                 }
-            }));
-        });
+
+                try {
+                    const response = await fetch(API_URL, {
+                        method: 'POST',
+                        body: JSON.stringify(orderData),
+                        headers: { 'Content-Type': 'text/plain;charset=utf-8' } // 避免 CORS OPTIONS 預檢
+                    });
+                    const result = await response.json();
+                    if (result.status === 'success') {
+                        setLastOrderId(result.orderId);
+                        setCart([]); // 清空購物車
+                        return true;
+                    }
+                    return false;
+                } catch (error) {
+                    console.error("Submit order failed", error);
+                    return false;
+                }
+            };
+
+            // 取得當前要渲染的產品
+            const activeProduct = useMemo(() => products.find(p => p.id === activeProductId), [products, activeProductId]);
+            const cartItemCount = cart.reduce((sum, item) => sum + item.quantity, 0);
+
+            if (loading) {
+                return <div className="min-h-screen flex items-center justify-center text-highlight tracking-widest font-bold">載入中...</div>;
+            }
+
+            return (
+                <div className="min-h-screen relative font-sans">
+                    {/* Header (成功頁面隱藏購物車圖示) */}
+                    {view !== 'success' && <Navbar cartCount={cartItemCount} onNavigate={navigate} logoUrl={settings.logo_image_url} />}
+
+                    {/* 主要內容區塊，使用 AnimatePresence 處理過場 */}
+                    <AnimatePresence mode="wait">
+                        {view === 'home' && <HomeView key="home" settings={settings} onNavigate={navigate} />}
+                        {view === 'products' && <ProductsView key="products" products={products} onNavigate={navigate} />}
+                        {view === 'productDetail' && activeProduct && <ProductDetailView key={`product-${activeProductId}`} product={activeProduct} onNavigate={navigate} onAddToCart={addToCart} />}
+                        {view === 'cart' && <CartView key="cart" cart={cart} updateQuantity={updateQuantity} removeItem={removeItem} settings={settings} onNavigate={navigate} />}
+                        {view === 'checkout' && <CheckoutView key="checkout" cart={cart} settings={settings} onNavigate={navigate} onSubmitOrder={submitOrder} />}
+                        {view === 'success' && <SuccessView key="success" orderId={lastOrderId} onNavigate={navigate} />}
+                    </AnimatePresence>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
     </script>
 </body>
 </html>
