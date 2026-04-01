@@ -337,11 +337,11 @@
                         </div>
                         <div>
                             <label className="block text-sm font-bold text-highlight mb-1">IG 帳號 *</label>
-                            <input required type="text" name="ig_account" value={formData.ig_account} onChange={handleChange} className="w-full border-b border-primary py-2 bg-transparent focus:outline-none focus:border-highlight transition-colors" placeholder="聯絡及後續通知用" />
+                            <input required type="text" name="ig_account" value={formData.ig_account} onChange={handleChange} className="w-full border-b border-primary py-2 bg-transparent focus:outline-none focus:border-highlight transition-colors" />
                         </div>
                         <div>
                             <label className="block text-sm font-bold text-highlight mb-1">Email *</label>
-                            <input required type="email" name="email" value={formData.email} onChange={handleChange} className="w-full border-b border-primary py-2 bg-transparent focus:outline-none focus:border-highlight transition-colors" placeholder="必填，用於寄送訂單通知" />
+                            <input required type="email" name="email" value={formData.email} onChange={handleChange} className="w-full border-b border-primary py-2 bg-transparent focus:outline-none focus:border-highlight transition-colors" />
                         </div>
                         
                         <div className="pt-4 border-t border-primary border-opacity-30">
@@ -352,7 +352,7 @@
                             <div className="space-y-4">
                                 <div>
                                     <label className="block text-sm font-bold text-highlight mb-1">門市名稱 *</label>
-                                    <input required type="text" name="cvs_store_name" value={formData.cvs_store_name} onChange={handleChange} className="w-full border-b border-primary py-2 bg-transparent focus:outline-none focus:border-highlight transition-colors" placeholder="例如：台大門市" />
+                                    <input required type="text" name="cvs_store_name" value={formData.cvs_store_name} onChange={handleChange} className="w-full border-b border-primary py-2 bg-transparent focus:outline-none focus:border-highlight transition-colors" />
                                 </div>
                                 <div>
                                     <label className="block text-sm font-bold text-highlight mb-1">門市店號 *</label>
@@ -378,17 +378,29 @@
                     🎉
                 </div>
                 <h2 className="text-2xl font-bold text-highlight mb-4">訂單已送出！</h2>
-                <p className="text-accent text-sm mb-2">感謝您的訂購，我們會盡快為您製作。</p>
-                {orderId && <p className="bg-cream border border-primary p-3 rounded-lg text-sm font-medium text-highlight mb-8 inline-block">訂單編號: {orderId}</p>}
                 
-                <div className="text-left bg-white p-6 rounded-2xl shadow-sm border border-primary border-opacity-30 text-sm text-highlight leading-relaxed mb-8">
-                    <p className="font-bold mb-4 text-highlight-red">接下來請注意：</p>
+                {/* 讀取 Google Sheet 的 success_message，若無則顯示預設字 */}
+                <p className="text-accent text-sm mb-4 whitespace-pre-line">
+                    {settings.success_message || "感謝您的訂購，我們會盡快為您製作。"}
+                </p>
+
+                {orderId && <p className="bg-cream border border-primary p-3 rounded-lg text-sm font-medium text-highlight mb-8 inline-block shadow-sm">訂單編號: {orderId}</p>}
+                
+                {/* 顯著強化的匯款與注意事項區塊 */}
+                <div className="text-left bg-highlight-red bg-opacity-5 p-6 rounded-2xl shadow-md border-2 border-highlight-red text-sm text-highlight leading-relaxed mb-8 relative overflow-hidden">
+                    <div className="absolute top-0 left-0 w-2 h-full bg-highlight-red"></div>
+                    <div className="flex items-center gap-2 mb-4">
+                        <span className="text-xl">⚠️</span>
+                        <p className="font-bold text-lg text-highlight-red">匯款與注意事項</p>
+                    </div>
+
                     {settings.bank_reminder && (
-                        <p className="mb-4 whitespace-pre-line text-accent">{settings.bank_reminder}</p>
+                        <p className="mb-5 whitespace-pre-line font-medium text-highlight">{settings.bank_reminder}</p>
                     )}
+                    
                     {settings.bank_account && (
-                        <div className="bg-cream p-4 rounded-xl border border-primary font-mono text-sm">
-                            <p className="whitespace-pre-line">{settings.bank_account}</p>
+                        <div className="bg-white p-5 rounded-xl border-2 border-primary border-dashed font-mono text-base text-highlight shadow-sm">
+                            <p className="whitespace-pre-line font-bold leading-relaxed">{settings.bank_account}</p>
                         </div>
                     )}
                 </div>
